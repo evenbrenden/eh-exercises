@@ -1,6 +1,11 @@
 module HCat where
 
+import qualified Control.Exception             as Exception
+import qualified Data.ByteString               as BS
+import qualified Data.Text                     as Text
+import qualified Data.Text.IO                  as TextIO
 import qualified System.Environment            as Env
+import qualified System.IO.Error               as IOError
 
 handleArgs :: IO (Either String FilePath)
 handleArgs = parseArgs <$> Env.getArgs
@@ -11,8 +16,18 @@ handleArgs = parseArgs <$> Env.getArgs
         _       -> Left "multiple files not supported"
 
 runHCat :: IO ()
-runHCat = handleArgs >>= displayMessage
+runHCat =
+    handleIOError
+        $   handleArgs
+        >>= eitherToErr
+        >>= TextIO.readFile
+        >>= TextIO.putStrLn
   where
-    displayMessage parsedArgument = case parsedArgument of
-        Left  errMessage -> putStrLn $ "Error: " <> errMessage
-        Right filename   -> putStrLn $ "Opening file: " <> filename
+    handleIOError :: IO () -> IO ()
+    handleIOError ioAction = Exception.catch ioAction handleErr
+    handleErr :: IOError -> IO ()
+    handleErr e = print "I ran into an error!" >> print e
+
+eitherToErr :: Show a => Either a b -> IO b
+eitherToErr (Right a) = return a
+eitherToErr (Left  e) = Exception.throwIO . IOError.userError $ show e
