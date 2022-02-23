@@ -3,7 +3,7 @@ module HCat where
 import qualified Control.Exception             as Exception
 import qualified Data.ByteString               as BS
 import qualified Data.Char                     as DC
-import           Data.Maybe
+import qualified Data.Maybe                    as DM
 import qualified Data.Text                     as Text
 import qualified Data.Text.IO                  as TextIO
 import qualified Data.Time.Clock               as Clock
@@ -13,7 +13,7 @@ import qualified System.Directory              as Directory
 import qualified System.Environment            as Env
 import           System.IO
 import qualified System.IO.Error               as IOError
-import           System.Info
+import qualified System.Info                   as SI
 import           System.Process                as Process
 import qualified Text.Printf                   as Printf
 
@@ -53,8 +53,8 @@ eitherToErr (Left  e) = Exception.throwIO . IOError.userError $ show e
 getTerminalSize :: IO (Either Text.Text ScreenDimensions)
 getTerminalSize = do
     tput <- Directory.findExecutable "tput"
-    if isJust tput
-        then case System.Info.os of
+    if DM.isJust tput
+        then case SI.os of
             "darwin" -> tputScreenDimensions
             "linux"  -> tputScreenDimensions
             _other   -> pure $ Right $ ScreenDimensions 25 80
