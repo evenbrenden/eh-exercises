@@ -25,13 +25,11 @@ runHCat = handleIOError $ do
     contents <- do
         handle <- openFile targetFilePath ReadMode
         TextIO.hGetContents handle
-    termSize <- do
-        size <- getTerminalSize
-        eitherToErr size
     hSetBuffering stdout NoBuffering
     finfo <- fileInfo targetFilePath
-    let pages = paginate termSize finfo contents
-    showPages pages 0
+    let file = File finfo contents
+    pages <- resize file
+    showPages pages 0 file
   where
     handleIOError :: IO () -> IO ()
     handleIOError ioAction = Exception.catch ioAction handleErr
@@ -118,8 +116,20 @@ wordWrap lineLength lineText
         | otherwise
         = softWrap hardwrappedText (textIndex - 1)
 
-showPages :: [Text.Text] -> Int -> IO ()
-showPages pages position = do
+resize :: File -> IO [Text.Text]
+resize File {..} = do
+    termSize <- do
+        size <- getTerminalSize
+        eitherToErr size
+    return $ paginate termSize info contents
+
+data File = File
+    { info     :: FileInfo
+    , contents :: Text.Text
+    }
+
+showPages :: [Text.Text] -> Int -> File -> IO ()
+showPages pages position file = do
     clearScreen
     let maybePage = DM.listToMaybe $ drop position pages
     case maybePage of
@@ -127,9 +137,12 @@ showPages pages position = do
             TextIO.putStrLn page
             continuation <- getNextStep
             case continuation of
-                Backward -> showPages pages (nonNegativePred position)
-                Forward  -> showPages pages (succ position)
-                Cancel   -> return ()
+                Backward -> showPages pages (nonNegativePred position) file
+                Forward  -> showPages pages (succ position) file
+                Resize   -> do
+                    resized <- resize file
+                    showPages resized position file
+                Cancel -> return ()
         Nothing -> return ()
     where nonNegativePred i = max 0 (pred i)
 
@@ -144,10 +157,11 @@ getNextStep = do
     case input of
         'b' -> return Backward
         'f' -> return Forward
+        'r' -> return Resize
         'q' -> return Cancel
         _   -> getNextStep
 
-data NextStep = Backward | Forward | Cancel deriving (Eq, Show)
+data NextStep = Backward | Forward | Resize | Cancel deriving (Eq, Show)
 
 formatFileInfo :: FileInfo -> Int -> Int -> Int -> Text.Text
 formatFileInfo FileInfo {..} maxWidth totalPages currentPage =
