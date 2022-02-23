@@ -6,6 +6,7 @@ common common-extensions
   default-extensions:
     LambdaCase
     OverloadedStrings
+    RecordWildCards
     TypeApplications
 
 library
