@@ -17,6 +17,9 @@ import qualified System.Info                   as SI
 import           System.Process                as Process
 import qualified Text.Printf                   as Printf
 
+-- Viewing Multiple Files PASS
+-- Add A Help Screen PASS
+
 runHCat :: IO ()
 runHCat = handleIOError $ do
     targetFilePath <- do
