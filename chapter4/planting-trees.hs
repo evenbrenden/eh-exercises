@@ -1,6 +1,10 @@
+{-# LANGUAGE OverloadedStrings #-}
+
+import qualified Data.Text                     as Text
+
 data BinaryTree a = Leaf | Branch (BinaryTree a) a (BinaryTree a) deriving Show
 
-showStringTree :: BinaryTree String -> String
+showStringTree :: BinaryTree Text.Text -> Text.Text
 showStringTree Leaf = "Leaf"
 showStringTree (Branch x y z) =
     "(Branch " <> showStringTree x <> " " <> y <> " " <> showStringTree z <> ")"

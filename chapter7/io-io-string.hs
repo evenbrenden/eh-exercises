@@ -1,10 +1,13 @@
+{-# LANGUAGE OverloadedStrings #-}
+
+import qualified Data.Text                     as Text
 import           System.IO.Unsafe
 
-f :: () -> IO (IO String)
-f _ = return <$> getLine
+f :: () -> IO (IO Text.Text)
+f _ = return <$> Text.pack <$> getLine
 
-g :: IO (IO String)
+g :: IO (IO Text.Text)
 g = f () >>= return
 
-h :: IO String
+h :: IO Text.Text
 h = unsafePerformIO $ f ()

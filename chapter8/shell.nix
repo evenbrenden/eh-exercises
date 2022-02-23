@@ -5,7 +5,7 @@ let
   inherit (nixpkgs) pkgs;
 
   f = { mkDerivation, base, bytestring, directory, hspec, lib
-      , process, QuickCheck, text, time
+      , process, QuickCheck, quickcheck-instances, text, time
       }:
       mkDerivation {
         pname = "hcat";
@@ -17,7 +17,9 @@ let
           base bytestring directory process text time
         ];
         executableHaskellDepends = [ base ];
-        testHaskellDepends = [ base hspec QuickCheck ];
+        testHaskellDepends = [
+          base hspec QuickCheck quickcheck-instances text
+        ];
         license = "unknown";
         hydraPlatforms = lib.platforms.none;
       };
