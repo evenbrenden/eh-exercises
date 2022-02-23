@@ -118,17 +118,6 @@ wordWrap lineLength lineText
         | otherwise
         = softWrap hardwrappedText (textIndex - 1)
 
-showHelp :: [Text.Text] -> Int -> IO ()
-showHelp pages position = do
-    clearScreen
-    TextIO.putStrLn "halp"
-    continuation <- getNextStep
-    case continuation of
-        Backward -> showHelp pages position
-        Forward  -> showPages pages position
-        Help     -> showHelp pages position
-        Cancel   -> return ()
-
 showPages :: [Text.Text] -> Int -> IO ()
 showPages pages position = do
     clearScreen
@@ -140,7 +129,6 @@ showPages pages position = do
             case continuation of
                 Backward -> showPages pages (nonNegativePred position)
                 Forward  -> showPages pages (succ position)
-                Help     -> showHelp pages position
                 Cancel   -> return ()
         Nothing -> return ()
     where nonNegativePred i = max 0 (pred i)
@@ -156,11 +144,10 @@ getNextStep = do
     case input of
         'b' -> return Backward
         'f' -> return Forward
-        '?' -> return Help
         'q' -> return Cancel
         _   -> getNextStep
 
-data NextStep = Backward | Forward | Help | Cancel deriving (Eq, Show)
+data NextStep = Backward | Forward | Cancel deriving (Eq, Show)
 
 formatFileInfo :: FileInfo -> Int -> Int -> Int -> Text.Text
 formatFileInfo FileInfo {..} maxWidth totalPages currentPage =
