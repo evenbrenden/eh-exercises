@@ -82,8 +82,6 @@ data ScreenDimensions = ScreenDimensions
     }
     deriving Show
 
--- There is a defect in this function where the first line of each page is
--- missing.
 paginate :: ScreenDimensions -> FileInfo -> Text.Text -> [Text.Text]
 paginate (ScreenDimensions rows cols) finfo text =
     let
@@ -143,7 +141,7 @@ showPages pages position file = do
     let maybePage = DM.listToMaybe $ drop position pages
     case maybePage of
         Just page -> do
-            TextIO.putStrLn page
+            TextIO.putStr page
             continuation <- getNextStep
             case continuation of
                 Backward -> showPages pages (nonNegativePred position) file
