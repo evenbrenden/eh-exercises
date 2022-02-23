@@ -2,6 +2,7 @@ module HCat where
 
 import qualified Control.Exception             as Exception
 import qualified Data.ByteString               as BS
+import           Data.Maybe
 import qualified Data.Text                     as Text
 import qualified Data.Text.IO                  as TextIO
 import qualified Data.Time.Clock               as Clock
@@ -23,7 +24,9 @@ runHCat = handleIOError $ do
     contents <- do
         handle <- openFile targetFilePath ReadMode
         TextIO.hGetContents handle
-    termSize <- getTerminalSize
+    termSize <- do
+        size <- getTerminalSize
+        eitherToErr size
     hSetBuffering stdout NoBuffering
     finfo <- fileInfo targetFilePath
     let pages = paginate termSize finfo contents
@@ -46,11 +49,15 @@ eitherToErr :: Show a => Either a b -> IO b
 eitherToErr (Right a) = return a
 eitherToErr (Left  e) = Exception.throwIO . IOError.userError $ show e
 
-getTerminalSize :: IO ScreenDimensions
-getTerminalSize = case System.Info.os of
-    "darwin" -> tputScreenDimensions
-    "linux"  -> tputScreenDimensions
-    _other   -> pure $ ScreenDimensions 25 80
+getTerminalSize :: IO (Either String ScreenDimensions)
+getTerminalSize = do
+    tput <- Directory.findExecutable "tput"
+    if isJust tput
+        then case System.Info.os of
+            "darwin" -> Right <$> tputScreenDimensions
+            "linux"  -> Right <$> tputScreenDimensions
+            _other   -> pure $ Right $ ScreenDimensions 25 80
+        else pure $ Left "tput not found"
   where
     tputScreenDimensions :: IO ScreenDimensions
     tputScreenDimensions = do
