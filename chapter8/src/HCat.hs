@@ -63,8 +63,8 @@ getTerminalSize = do
     tputScreenDimensions = do
         lines <- Process.readProcess "tput" ["lines"] ""
         cols  <- Process.readProcess "tput" ["cols"] ""
-        let lines' = read $ init lines
-            cols'  = read $ init cols
+        let lines' = read $ filter (/= '\n') lines
+            cols'  = read $ filter (/= '\n') cols
         return $ ScreenDimensions lines' cols'
 
 data ScreenDimensions = ScreenDimensions
