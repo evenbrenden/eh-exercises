@@ -31,7 +31,7 @@ runHCat = handleIOError $ do
     hSetBuffering stdout NoBuffering
     finfo <- fileInfo targetFilePath
     let pages = paginate termSize finfo contents
-    showPages pages
+    showPages pages 0
   where
     handleIOError :: IO () -> IO ()
     handleIOError ioAction = Exception.catch ioAction handleErr
@@ -117,30 +117,36 @@ wordWrap lineLength lineText
         | otherwise
         = softWrap hardwrappedText (textIndex - 1)
 
-showPages :: [Text.Text] -> IO ()
-showPages []             = return ()
-showPages (page : pages) = do
+showPages :: [Text.Text] -> Int -> IO ()
+showPages pages position = do
     clearScreen
-    TextIO.putStrLn page
-    continuation <- getContinue
-    case continuation of
-        Continue -> showPages pages
-        Cancel   -> return ()
+    let maybePage = DM.listToMaybe $ drop position pages
+    case maybePage of
+        Just page -> do
+            TextIO.putStrLn page
+            continuation <- getNextStep
+            case continuation of
+                Backward -> showPages pages (nonNegativePred position)
+                Forward  -> showPages pages (succ position)
+                Cancel   -> return ()
+        Nothing -> return ()
+    where nonNegativePred i = max 0 (pred i)
 
 clearScreen :: IO ()
 clearScreen = BS.putStr "\^[[1J\^[[1;1H"
 
-getContinue :: IO ContinueCancel
-getContinue = do
+getNextStep :: IO NextStep
+getNextStep = do
     hSetBuffering stdin NoBuffering
     hSetEcho stdin False
     input <- hGetChar stdin
     case input of
-        ' ' -> return Continue
+        'b' -> return Backward
+        'f' -> return Forward
         'q' -> return Cancel
-        _   -> getContinue
+        _   -> getNextStep
 
-data ContinueCancel = Continue | Cancel deriving (Eq, Show)
+data NextStep = Backward | Forward | Cancel deriving (Eq, Show)
 
 formatFileInfo :: FileInfo -> Int -> Int -> Int -> Text.Text
 formatFileInfo FileInfo {..} maxWidth totalPages currentPage =
