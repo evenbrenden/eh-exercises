@@ -79,7 +79,8 @@ data ScreenDimensions = ScreenDimensions
     }
     deriving Show
 
--- There's a bug in this one where the first line of each page is missing
+-- There is a defect in this function where the first line of each page is
+-- missing
 paginate :: ScreenDimensions -> FileInfo -> Text.Text -> [Text.Text]
 paginate (ScreenDimensions rows cols) finfo text =
     let
@@ -118,6 +119,8 @@ wordWrap lineLength lineText
         | otherwise
         = softWrap hardwrappedText (textIndex - 1)
 
+-- We need the original file content since we lose the original line endings
+-- when paginating
 resize :: File -> IO [Text.Text]
 resize File {..} = do
     termSize <- do
