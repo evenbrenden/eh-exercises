@@ -68,7 +68,9 @@ getTerminalSize = do
                     cols'  = read cols
                 in  return $ Right $ ScreenDimensions lines' cols'
             else return $ Left "tput output is not a number"
-    noNewLine s = if null s then s else (head . lines) s
+    noNewLine s = case lines s of
+        []       -> []
+        (x : xs) -> x
     isNumber s = not (null s) && all DC.isDigit s
 
 data ScreenDimensions = ScreenDimensions
