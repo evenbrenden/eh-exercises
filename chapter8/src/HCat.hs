@@ -2,6 +2,7 @@ module HCat where
 
 import qualified Control.Exception             as Exception
 import qualified Data.ByteString               as BS
+import qualified Data.Char                     as DC
 import           Data.Maybe
 import qualified Data.Text                     as Text
 import qualified Data.Text.IO                  as TextIO
@@ -49,23 +50,28 @@ eitherToErr :: Show a => Either a b -> IO b
 eitherToErr (Right a) = return a
 eitherToErr (Left  e) = Exception.throwIO . IOError.userError $ show e
 
-getTerminalSize :: IO (Either String ScreenDimensions)
+getTerminalSize :: IO (Either Text.Text ScreenDimensions)
 getTerminalSize = do
     tput <- Directory.findExecutable "tput"
     if isJust tput
         then case System.Info.os of
-            "darwin" -> Right <$> tputScreenDimensions
-            "linux"  -> Right <$> tputScreenDimensions
+            "darwin" -> tputScreenDimensions
+            "linux"  -> tputScreenDimensions
             _other   -> pure $ Right $ ScreenDimensions 25 80
         else pure $ Left "tput not found"
   where
-    tputScreenDimensions :: IO ScreenDimensions
+    tputScreenDimensions :: IO (Either Text.Text ScreenDimensions)
     tputScreenDimensions = do
-        lines <- Process.readProcess "tput" ["lines"] ""
-        cols  <- Process.readProcess "tput" ["cols"] ""
-        let lines' = read $ filter (/= '\n') lines
-            cols'  = read $ filter (/= '\n') cols
-        return $ ScreenDimensions lines' cols'
+        lines <- noNewLine <$> Process.readProcess "tput" ["lines"] ""
+        cols  <- noNewLine <$> Process.readProcess "tput" ["cols"] ""
+        if isNumber lines && isNumber cols
+            then
+                let lines' = read lines
+                    cols'  = read cols
+                in  return $ Right $ ScreenDimensions lines' cols'
+            else return $ Left "tput output is not a number"
+    noNewLine s = if null s then s else (head . lines) s
+    isNumber s = not (null s) && all DC.isDigit s
 
 data ScreenDimensions = ScreenDimensions
     { screenRows    :: Int
