@@ -79,6 +79,7 @@ data ScreenDimensions = ScreenDimensions
     }
     deriving Show
 
+-- There's a bug in this one where the first line of each page is missing
 paginate :: ScreenDimensions -> FileInfo -> Text.Text -> [Text.Text]
 paginate (ScreenDimensions rows cols) finfo text =
     let
@@ -92,7 +93,7 @@ paginate (ScreenDimensions rows cols) finfo text =
         zipWith (<>) pages statusLines
   where
     padTo :: Int -> [Text.Text] -> [Text.Text]
-    padTo lineCOunt rowsToPad = take lineCOunt $ rowsToPad <> repeat ""
+    padTo lineCount rowsToPad = take lineCount $ rowsToPad <> repeat ""
 
 groupsOf :: Int -> [a] -> [[a]]
 groupsOf n []    = []
