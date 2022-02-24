@@ -120,9 +120,6 @@ wordWrap lineLength lineText
         | otherwise
         = softWrap hardwrappedText (textIndex - 1)
 
--- We need the original file content since we lose the original line endings
--- when paginating. Alternatively, we could reload the original file from disk.
--- That would save memory, but we would risk loading a changed or missing file.
 resize :: File -> IO [Text.Text]
 resize File {..} = do
     termSize <- do
