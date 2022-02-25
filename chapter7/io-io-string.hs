@@ -1,13 +1,13 @@
 {-# LANGUAGE OverloadedStrings #-}
 
+import           Control.Monad
 import qualified Data.Text                     as Text
-import           System.IO.Unsafe
 
-f :: () -> IO (IO Text.Text)
-f _ = return <$> Text.pack <$> getLine
+x :: IO (IO Text.Text)
+x = return <$> Text.pack <$> getLine
 
-g :: IO (IO Text.Text)
-g = f () >>= return
+y :: IO (IO Text.Text)
+y = x >>= return
 
-h :: IO Text.Text
-h = unsafePerformIO $ f ()
+z :: IO Text.Text
+z = join $ x

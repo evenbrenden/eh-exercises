@@ -1,4 +1,4 @@
-import           System.IO.Unsafe
+import           Control.Monad
 
 f :: IO (IO a) -> IO a
-f = unsafePerformIO
+f = join
