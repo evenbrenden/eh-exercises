@@ -1,3 +1,5 @@
+{-# LANGUAGE BangPatterns #-}
+
 import           Control.Concurrent             ( threadDelay )
 import           Data.IORef
 import qualified Data.Map.Strict               as Map
@@ -24,11 +26,11 @@ newMetrics =
                                      }
     in  Metrics <$> newIORef emptyAppMetrics
 
-timeFunction :: Metrics -> String -> IO a -> IO a
+timeFunction :: Show a => Metrics -> String -> a -> IO a
 timeFunction (Metrics metrics) actionName action = do
     startTime <- getCurrentTime
-    result    <- action
-    endTime   <- getCurrentTime
+    let !result = action
+    endTime <- getCurrentTime
     modifyIORef metrics $ \oldMetrics ->
         let oldDurationValue = fromMaybe 0
                 $ Map.lookup actionName (callDuration oldMetrics)
@@ -41,8 +43,15 @@ timeFunction (Metrics metrics) actionName action = do
                 }
     pure result
 
+fibs = 0 : 1 : nextFibs fibs (tail fibs)
+    where nextFibs (a : as) (b : bs) = (a + b) : nextFibs as bs
+
+-- The limitation is that once the value is evaluated, we can't evaluate it
+-- again. So running example a second time won't time it at all. The user would
+-- have to ensure that the value is not evaluated before calling timeFunction.
 example = do
     metrics <- newMetrics
-    timeFunction metrics "wait" (threadDelay 1000000)
+    let value = last $ take 500000 $ fibs
+    timeFunction metrics "fibs" value
     metrics' <- readIORef (appMetricsStore metrics)
     print metrics'
