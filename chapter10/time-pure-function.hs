@@ -26,8 +26,8 @@ newMetrics =
                                      }
     in  Metrics <$> newIORef emptyAppMetrics
 
-timeFunction :: Show a => Metrics -> String -> a -> IO a
-timeFunction (Metrics metrics) actionName action = do
+timePureFunction :: Show a => Metrics -> String -> a -> IO a
+timePureFunction (Metrics metrics) actionName action = do
     startTime <- getCurrentTime
     let !result = action
     endTime <- getCurrentTime
@@ -48,10 +48,11 @@ fibs = 0 : 1 : nextFibs fibs (tail fibs)
 
 -- The limitation is that once the value is evaluated, we can't evaluate it
 -- again. So running example a second time won't time it at all. The user would
--- have to ensure that the value is not evaluated before calling timeFunction.
+-- have to ensure that the value is not evaluated before calling
+-- timePureFunction.
 example = do
     metrics <- newMetrics
     let value = last $ take 500000 $ fibs
-    timeFunction metrics "fibs" value
+    timePureFunction metrics "fibs" value
     metrics' <- readIORef (appMetricsStore metrics)
     print metrics'
