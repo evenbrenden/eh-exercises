@@ -26,7 +26,7 @@ newMetrics =
                                      }
     in  Metrics <$> newIORef emptyAppMetrics
 
-timePureFunction :: Show a => Metrics -> String -> a -> IO a
+timePureFunction :: Metrics -> String -> a -> IO a
 timePureFunction (Metrics metrics) actionName action = do
     startTime <- getCurrentTime
     let !result = action
