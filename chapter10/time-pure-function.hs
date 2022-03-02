@@ -49,7 +49,7 @@ fibs = 0 : 1 : nextFibs fibs (tail fibs)
 -- The limitation is that once the value is evaluated, we can't evaluate it
 -- again. So running example a second time won't time it at all. The user would
 -- have to ensure that the value is not evaluated before calling
--- timePureFunction.
+-- timePureFunction. AFAIK there is no way to force reevaluation.
 example = do
     metrics <- newMetrics
     let value = last $ take 500000 $ fibs
