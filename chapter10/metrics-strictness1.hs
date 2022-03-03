@@ -30,9 +30,9 @@ import           System.Environment             ( getArgs )
 import           Text.Printf
 
 data MetricsStore = MetricsStore
-    { successCount :: !Int
-    , failureCount :: !Int
-    , callDuration :: !(Map.Map String Int)
+    { successCount :: Int
+    , failureCount :: Int
+    , callDuration :: (Map.Map String Int)
     }
     deriving (Eq, Show)
 
@@ -53,12 +53,12 @@ newMetrics =
 
 tickSuccess :: Metrics -> IO ()
 tickSuccess (Metrics metricsRef) =
-    let update !m = m { successCount = 1 + successCount m }
+    let update m = m { successCount = 1 + successCount m }
     in  modifyIORef metricsRef update
 
 tickFailure :: Metrics -> IO ()
 tickFailure (Metrics metricsRef) =
-    let update !m = m { failureCount = 1 + failureCount m }
+    let update m = m { failureCount = 1 + failureCount m }
     in  modifyIORef metricsRef update
 
 timeFunction :: Metrics -> String -> IO a -> IO a
@@ -71,7 +71,7 @@ timeFunction (Metrics metrics) actionName action = do
                 $ Map.lookup actionName (callDuration oldMetrics)
             runDuration =
                 floor . nominalDiffTimeToSeconds $ diffUTCTime endTime startTime
-            !newDurationValue = oldDurationValue + runDuration
+            newDurationValue = oldDurationValue + runDuration
         in  oldMetrics
                 { callDuration = Map.insert actionName newDurationValue
                                      $ callDuration oldMetrics
