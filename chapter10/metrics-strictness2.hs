@@ -42,9 +42,9 @@ displayMetrics metrics = do
     successCount' <- readIORef (successCount metrics')
     failureCount' <- readIORef (failureCount metrics')
     callDuration' <- readIORef (callDuration metrics')
-    print $ "Success count: " <> show successCount'
-    print $ "Failure count: " <> show failureCount'
-    print $ "Call duration: " <> show callDuration'
+    putStrLn $ "successCount = " <> show successCount'
+    putStrLn $ "failureCount = " <> show failureCount'
+    putStrLn $ "callDuration = " <> show callDuration'
 
 newMetrics :: IO Metrics
 newMetrics = do

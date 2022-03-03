@@ -40,8 +40,10 @@ newtype Metrics = Metrics { appMetricsStore :: IORef MetricsStore }
 
 displayMetrics :: Metrics -> IO ()
 displayMetrics metrics = do
-    metrics' <- readIORef $ appMetricsStore metrics
-    print metrics'
+    metrics' <- readIORef (appMetricsStore metrics)
+    putStrLn $ "successCount = " <> show (successCount metrics')
+    putStrLn $ "failureCount = " <> show (failureCount metrics')
+    putStrLn $ "callDuration = " <> show (callDuration metrics')
 
 newMetrics :: IO Metrics
 newMetrics =
