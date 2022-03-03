@@ -1,1 +1,5 @@
+*.hi
+*.o
 example-dir/
+metrics-strictness1
+metrics-strictness2
