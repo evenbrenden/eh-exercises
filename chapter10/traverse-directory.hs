@@ -44,8 +44,8 @@ dropSuffix :: String -> String -> String
 dropSuffix suffix s | suffix `isSuffixOf` s = take (length s - length suffix) s
                     | otherwise             = s
 
-traverseDirectory :: FilePath -> (FilePath -> IO a) -> IO [a]
-traverseDirectory rootPath action = do
+traverseDirectoryIO :: FilePath -> (FilePath -> IO a) -> IO [a]
+traverseDirectoryIO rootPath action = do
     seenRef <- newIORef Set.empty
     files   <- newIORef []
     let haveSeenDirectory canonicalPath =
@@ -71,4 +71,4 @@ traverseDirectory rootPath action = do
     traverseSubdirectory (dropSuffix "/" rootPath)
     readIORef files >>= traverse action
 
-example = traverseDirectory "." canonicalizePath
+example = traverseDirectoryIO "." canonicalizePath
