@@ -48,11 +48,12 @@ displayMetrics metrics = do
 
 newMetrics :: IO Metrics
 newMetrics = do
-    zero  <- newIORef 0
-    empty <- newIORef Map.empty
-    let emptyMetricsStore = MetricsStore { successCount = zero
-                                         , failureCount = zero
-                                         , callDuration = empty
+    sZero  <- newIORef 0
+    fZero  <- newIORef 0
+    cEmpty <- newIORef Map.empty
+    let emptyMetricsStore = MetricsStore { successCount = sZero
+                                         , failureCount = fZero
+                                         , callDuration = cEmpty
                                          }
     return $ Metrics emptyMetricsStore
 
