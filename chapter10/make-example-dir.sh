@@ -1,4 +1,4 @@
-#! /usr/env/bin bash
+#! /usr/bin/env bash
 
 count=1000;
 dest=example-dir
