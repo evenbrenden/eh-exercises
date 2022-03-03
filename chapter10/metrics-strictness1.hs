@@ -56,19 +56,19 @@ newMetrics =
 tickSuccess :: Metrics -> IO ()
 tickSuccess (Metrics metricsRef) =
     let update m = m { successCount = 1 + successCount m }
-    in  modifyIORef metricsRef update
+    in  modifyIORef' metricsRef update
 
 tickFailure :: Metrics -> IO ()
 tickFailure (Metrics metricsRef) =
     let update m = m { failureCount = 1 + failureCount m }
-    in  modifyIORef metricsRef update
+    in  modifyIORef' metricsRef update
 
 timeFunction :: Metrics -> String -> IO a -> IO a
 timeFunction (Metrics metrics) actionName action = do
     startTime <- getCurrentTime
     result    <- action
     endTime   <- getCurrentTime
-    modifyIORef metrics $ \oldMetrics ->
+    modifyIORef' metrics $ \oldMetrics ->
         let oldDurationValue = fromMaybe 0
                 $ Map.lookup actionName (callDuration oldMetrics)
             runDuration =
@@ -104,7 +104,7 @@ traverseDirectory metrics rootPath action = do
     let haveSeenDirectory canonicalPath =
             Set.member canonicalPath <$> readIORef seenRef
         addDirectoryToSeen canonicalPath =
-            modifyIORef seenRef $ Set.insert canonicalPath
+            modifyIORef' seenRef $ Set.insert canonicalPath
         traverseSubdirectory subdirPath =
             timeFunction metrics "traverseSubdirectory" $ do
                 contents <- listDirectory subdirPath
@@ -144,7 +144,7 @@ directorySummaryWithMetrics root = do
                     Map.insertWith (+) letter 1 histogram
                 newHistogram =
                     Text.foldl' addCharToHistogram oldHistogram contents
-            modifyIORef histogramRef (const $ newHistogram)
+            modifyIORef' histogramRef (const $ newHistogram)
     histogram <- readIORef histogramRef
     putStrLn "Histogram Data:"
     for_ (Map.toList histogram)
