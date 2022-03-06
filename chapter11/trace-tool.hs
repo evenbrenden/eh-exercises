@@ -4,43 +4,32 @@ module CallTrace where
 
 import           Text.Printf
 
-data TraceData = forall a . Show a => TraceData
-    { trace :: a
-    , depth :: Int
-    }
+data TraceData = forall a . Show a => TraceData a
 
 instance Show TraceData where
-    show (TraceData a _) = show a
+    show (TraceData a) = show a
 
-newtype Trace = Trace TraceData
+newtype Trace = Trace [TraceData]
 
 emptyTrace :: Trace
-emptyTrace = Trace $ TraceData "done!" 0
-
-stackDepth :: Trace -> Int
-stackDepth (Trace t) = depth t
+emptyTrace = Trace []
 
 traceCall :: (Show a, Show b) => String -> (a -> (Trace, b)) -> a -> (Trace, b)
 traceCall s f a =
-    let (t, b) = f a
-        d      = stackDepth t + 1
-        s'     = showTrace t
-        t'     = Trace $ TraceData
-            (  s
-            <> " "
-            <> show a
-            <> " => "
-            <> show b
-            <> " (depth is "
-            <> show d
-            <> ") -> "
-            <> read s'
-            )
-            d
+    let (Trace t, b) = f a
+        s'           = s <> " " <> show a <> " => " <> show b
+        t'           = Trace $ (TraceData s' : t)
     in  (t', b)
 
 showTrace :: Trace -> String
-showTrace (Trace a) = show a
+showTrace (Trace a) =
+    let
+        sd = "stack depth: " <> show (length a) <> "\n"
+        go n [] = ""
+        go n (a : as) =
+            (take n $ repeat '\t') <> (read . show) a <> "\n" <> go (n + 1) as
+    in
+        sd <> go 0 a
 
 factor :: Int -> (Trace, [Int])
 factor n = traceCall "factor" factor' (n, 2)
