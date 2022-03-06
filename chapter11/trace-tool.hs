@@ -1,26 +1,42 @@
 {-# LANGUAGE ExistentialQuantification #-}
-{-# LANGUAGE RecordWildCards #-}
-{-# LANGUAGE TypeApplications #-}
 
 module CallTrace where
 
 import           Text.Printf
 
-data TraceData = forall a . Show a => TraceData a
+data TraceData = forall a . Show a => TraceData
+    { trace :: a
+    , depth :: Int
+    }
 
 instance Show TraceData where
-    show (TraceData a) = show a
+    show (TraceData a _) = show a
 
 newtype Trace = Trace TraceData
 
 emptyTrace :: Trace
-emptyTrace = Trace $ TraceData $ mempty @String
+emptyTrace = Trace $ TraceData "done!" 0
+
+stackDepth :: Trace -> Int
+stackDepth (Trace t) = depth t
 
 traceCall :: (Show a, Show b) => String -> (a -> (Trace, b)) -> a -> (Trace, b)
-traceCall s abt a =
-    let (t, b) = abt a
+traceCall s f a =
+    let (t, b) = f a
+        d      = stackDepth t + 1
         s'     = showTrace t
-        t'     = Trace $ TraceData $ s <> show a <> " => " <> show b <> s'
+        t'     = Trace $ TraceData
+            (  s
+            <> " "
+            <> show a
+            <> " => "
+            <> show b
+            <> " (depth is "
+            <> show d
+            <> ") -> "
+            <> read s'
+            )
+            d
     in  (t', b)
 
 showTrace :: Trace -> String
