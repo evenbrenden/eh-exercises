@@ -1,3 +1,4 @@
+{-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
@@ -9,11 +10,6 @@ import           Data.Bits                      ( (.&.)
                                                 , shift
                                                 )
 import qualified Data.ByteString               as BS
-import qualified Data.ByteString.Base64        as B64
-import qualified Data.ByteString.Char8         as BC
-import           Data.ByteString.Char8          ( pack
-                                                , unpack
-                                                )
 import           Data.ByteString.Char8          ( pack
                                                 , unpack
                                                 )
@@ -23,23 +19,20 @@ import           Data.Text.Encoding             ( decodeUtf8
                                                 )
 import           Data.Word
 import           System.Posix.Types
-import           Text.Read
 
-data FileContents
-    = StringFileContents String
-    | TextFileContents Text.Text
-    | ByteStringFileContents BS.ByteString
-    deriving (Eq, Read, Show)
-
-data FileData = FileData
+data FileData a = FileData
     { packedFileName        :: FilePath
     , packedFileSize        :: Word32
     , packedFilePermissions :: FileMode
-    , packedFileData        :: FileContents
+    , packedFileData        :: a
     }
     deriving (Eq, Read, Show)
 
-newtype FilePack = FilePack {getPackedFiles :: [FileData]} deriving (Eq, Read, Show)
+newtype FilePack = FilePack [Packable]
+
+data Packable = forall a . Encode a => Packable
+    { getPackable :: FileData a
+    }
 
 class Encode a where
     encode :: a -> BS.ByteString
@@ -54,6 +47,27 @@ class Encode a where
 
 class Decode a where
     decode :: BS.ByteString -> Either String a
+
+instance Encode a => Encode (FileData a) where
+    encode FileData {..} =
+        let
+            encodedFileName        = encodeWithSize packedFileName
+            encodedFileSize        = encodeWithSize packedFileSize
+            encodedFilePermissions = encodeWithSize packedFilePermissions
+            encodedFileData        = encodeWithSize packedFileData
+            encodedData =
+                encodedFileName
+                    <> encodedFileSize
+                    <> encodedFilePermissions
+                    <> encodedFileData
+        in
+            encode encodedData
+
+instance Encode FilePack where
+    encode (FilePack p) = encode p
+
+instance Encode Packable where
+    encode (Packable p) = encode p
 
 instance Encode BS.ByteString where
     encode = id
@@ -80,38 +94,6 @@ instance Encode Word32 where
 
 instance Decode Word32 where
     decode = bytestringToWord32
-
-instance Encode FileMode where
-    encode (CMode fMode) = encode fMode
-
-instance Decode FileMode where
-    decode = fmap CMode . decode
-
-instance Encode FileContents where
-    encode (StringFileContents     x) = encode x
-    encode (TextFileContents       x) = encode x
-    encode (ByteStringFileContents x) = encode x
-
-instance Encode FileData where
-    encode FileData {..} =
-        let
-            encodedFileName        = encodeWithSize packedFileName
-            encodedFileSize        = encodeWithSize packedFileSize
-            encodedFilePermissions = encodeWithSize packedFilePermissions
-            encodedFileData        = encodeWithSize packedFileData
-            encodedData =
-                encodedFileName
-                    <> encodedFileSize
-                    <> encodedFilePermissions
-                    <> encodedFileData
-        in
-            encode encodedData
-
-instance (Encode a, Encode b) => Encode (a,b) where
-    encode (a, b) = encode $ encodeWithSize a <> encodeWithSize b
-
-instance {-# OVERLAPPABLE #-} Encode a => Encode [a] where
-    encode = encode . foldMap encodeWithSize
 
 word32ToBytes :: Word32 -> (Word8, Word8, Word8, Word8)
 word32ToBytes word =
@@ -144,27 +126,43 @@ consWord32 :: Word32 -> BS.ByteString -> BS.ByteString
 consWord32 word bytestring =
     let packedWord = word32ToByteString word in packedWord <> bytestring
 
-packFiles :: FilePack -> BS.ByteString
-packFiles filePack = B64.encode . BC.pack . show $ filePack
+instance Encode FileMode where
+    encode (CMode fMode) = encode fMode
 
-unpackFiles :: BS.ByteString -> Either String FilePack
-unpackFiles serializedData =
-    B64.decode serializedData >>= readEither . BC.unpack
+instance Decode FileMode where
+    decode = fmap CMode . decode
 
-sampleFilePack :: FilePack
-sampleFilePack =
-    FilePack
-        $ [ FileData "stringFile" 0 0 $ StringFileContents "hello string"
-          , FileData "textFile" 0 0 $ TextFileContents "hello text"
-          , FileData "binaryFile" 0 0
-              $ ByteStringFileContents "hello bytestring"
-          ]
+instance (Encode a, Encode b) => Encode (a, b) where
+    encode (a, b) = encode $ encodeWithSize a <> encodeWithSize b
 
-testPackFile :: BS.ByteString
-testPackFile = packFiles sampleFilePack
+instance {-# OVERLAPPABLE #-} Encode a => Encode [a] where
+    encode = encode . foldMap encodeWithSize
 
-testUnpackFile :: Either String FilePack
-testUnpackFile = unpackFiles testPackFile
+addFileDataToPack :: Encode a => FileData a -> FilePack -> FilePack
+addFileDataToPack a (FilePack as) = FilePack $ (Packable a) : as
 
-testRoundTrip :: FilePack -> Bool
-testRoundTrip pack = (Right pack) == (unpackFiles $ packFiles pack)
+infixr 6 .:
+(.:) :: (Encode a) => FileData a -> FilePack -> FilePack
+(.:) = addFileDataToPack
+
+emptyFilePack :: FilePack
+emptyFilePack = FilePack []
+
+testEncodeValue :: BS.ByteString
+testEncodeValue =
+    let a = FileData { packedFileName        = "a"
+                     , packedFileSize        = 3
+                     , packedFilePermissions = 0755
+                     , packedFileData        = "foo" :: String
+                     }
+        b = FileData { packedFileName        = "b"
+                     , packedFileSize        = 10
+                     , packedFilePermissions = 0644
+                     , packedFileData        = ["hello", "world"] :: [Text.Text]
+                     }
+        c = FileData { packedFileName        = "c"
+                     , packedFileSize        = 8
+                     , packedFilePermissions = 0644
+                     , packedFileData        = (0, "zero") :: (Word32, String)
+                     }
+    in  encode $ a .: b .: c .: emptyFilePack
