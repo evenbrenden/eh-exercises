@@ -166,3 +166,23 @@ testEncodeValue =
                      , packedFileData        = (0, "zero") :: (Word32, String)
                      }
     in  encode $ a .: b .: c .: emptyFilePack
+
+-- IDK, I thought this was pretty ergonomic and easy?
+nestedFilePack :: BS.ByteString
+nestedFilePack =
+    let a = FileData { packedFileName        = "a"
+                     , packedFileSize        = 3
+                     , packedFilePermissions = 0755
+                     , packedFileData        = "foo" :: String
+                     }
+        b = FileData { packedFileName        = "b"
+                     , packedFileSize        = 10
+                     , packedFilePermissions = 0644
+                     , packedFileData        = a
+                     }
+        c = FileData { packedFileName        = "c"
+                     , packedFileSize        = 8
+                     , packedFilePermissions = 0644
+                     , packedFileData        = b
+                     }
+    in  encode $ a .: b .: c .: emptyFilePack
