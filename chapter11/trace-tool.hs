@@ -1,4 +1,5 @@
 {-# LANGUAGE ExistentialQuantification #-}
+{-# LANGUAGE RecordWildCards #-}
 
 module CallTrace where
 
@@ -11,25 +12,40 @@ instance Show TraceData where
 
 newtype Trace = Trace [TraceData]
 
+data TraceInfo = TraceInfo
+    { fun :: String
+    , arg :: String
+    , res :: String
+    }
+
+instance Show TraceInfo where
+    show TraceInfo {..} = fun <> " " <> arg <> " => " <> res
+
 emptyTrace :: Trace
 emptyTrace = Trace []
 
+consTraceData :: TraceData -> Trace -> Trace
+consTraceData (TraceData t) (Trace ts) = Trace (TraceData t : ts)
+
+makeTraceData :: String -> String -> String -> TraceData
+makeTraceData f a r = TraceData $ TraceInfo f a r
+
 traceCall :: (Show a, Show b) => String -> (a -> (Trace, b)) -> a -> (Trace, b)
 traceCall s f a =
-    let (Trace t, b) = f a
-        s'           = s <> " " <> show a <> " => " <> show b
-        t'           = Trace $ (TraceData s' : t)
-    in  (t', b)
+    let (t, r) = f a
+        td     = makeTraceData s (show a) (show r)
+        t'     = consTraceData td t
+    in  (t', r)
+
+tabs :: Int -> String
+tabs n = take n $ repeat '\t'
 
 showTrace :: Trace -> String
-showTrace (Trace a) =
-    let
-        sd = "stack depth: " <> show (length a) <> "\n"
-        go n [] = ""
-        go n (a : as) =
-            (take n $ repeat '\t') <> (read . show) a <> "\n" <> go (n + 1) as
-    in
-        sd <> go 0 a
+showTrace (Trace ts) =
+    let sd = "stack depth: " <> show (length ts) <> "\n"
+        folder t (s, n) = (s <> tabs n <> show t <> "\n", n + 1)
+        folded = foldr folder (mempty, 0) ts
+    in  sd <> fst folded
 
 factor :: Int -> (Trace, [Int])
 factor n = traceCall "factor" factor' (n, 2)
