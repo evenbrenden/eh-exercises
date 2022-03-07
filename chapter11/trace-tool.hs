@@ -42,10 +42,11 @@ tabs n = take n $ repeat '\t'
 
 showTrace :: Trace -> String
 showTrace (Trace ts) =
-    let sd = "stack depth: " <> show (length ts) <> "\n"
-        folder t (s, n) = (s <> tabs n <> show t <> "\n", n + 1)
-        folded = foldr folder (mempty, 0) ts
-    in  sd <> fst folded
+    let sd     = length ts
+        header = "stack depth: " <> show sd <> "\n"
+        folder t (s, n) = (tabs n <> show t <> "\n" <> s, n - 1)
+        folded = foldr folder (mempty, sd - 1) ts
+    in  header <> fst folded
 
 factor :: Int -> (Trace, [Int])
 factor n = traceCall "factor" factor' (n, 2)
