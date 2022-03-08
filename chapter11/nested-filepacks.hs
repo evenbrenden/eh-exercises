@@ -167,7 +167,7 @@ testEncodeValue =
                      }
     in  encode $ a .: b .: c .: emptyFilePack
 
--- IDK, I thought this was pretty ergonomic and easy?
+-- IDK, I think this is pretty ergonomic and easy?
 nestedFilePack :: BS.ByteString
 nestedFilePack =
     let a = FileData { packedFileName        = "a"
