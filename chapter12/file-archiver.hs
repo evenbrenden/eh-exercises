@@ -7,6 +7,7 @@
 
 module FileArchiver where
 
+import           Control.Applicative
 import           Control.Monad
 import           Data.Bits                      ( (.&.)
                                                 , (.|.)
@@ -290,22 +291,39 @@ parseEven = FilePackParser $ \input -> do
         then pure (val, rest)
         else Left "Cannot extract a non-even value"
 
-parseMany :: FilePackParser a -> FilePackParser [a]
-parseMany parseElement = FilePackParser $ \input ->
-    case runParser parseElement input of
-        Left  _err        -> pure ([], input)
-        Right (val, rest) -> do
-            (tail, rest') <- runParser (parseMany parseElement) rest
-            pure (val : tail, rest')
+instance Alternative FilePackParser where
+    empty = FilePackParser $ const (Left "empty parser")
+    parserA <|> parserB = FilePackParser $ \s -> case runParser parserA s of
+        Right val  -> Right val
+        Left  errA -> runParser parserB s
 
 extractOptional :: FilePackParser a -> FilePackParser (Maybe a)
-extractOptional parseElement = FilePackParser $ \input ->
-    case runParser parseElement input of
-        Left  _err        -> pure (Nothing, input)
-        Right (val, rest) -> pure (Just val, rest)
+extractOptional = (<|> pure Nothing) . fmap Just
+
+parseSome :: FilePackParser a -> FilePackParser [a]
+parseSome p = (:) <$> p <*> parseMany p
+
+parseMany :: FilePackParser a -> FilePackParser [a]
+parseMany p = parseSome p <|> pure []
+
+instance {-# OVERLAPPABLE #-} Decode a => Decode [a] where
+    decode = execParser (many extractValue)
+
+testDecodeValue
+    :: BS.ByteString
+    -> Either
+           String
+           (FileData String, FileData [Text.Text], FileData (Word32, String))
+testDecodeValue =
+    execParser $ (,,) <$> extractValue <*> extractValue <*> extractValue
+
+-- From the last chapter
+testEncodeValue =
+    "\FS\NUL\NUL\NUL\SOH\NUL\NUL\NULa\EOT\NUL\NUL\NUL\ETX\NUL\NUL\NUL\EOT\NUL\NUL\NUL\243\STX\NUL\NUL\ETX\NUL\NUL\NULfoo+\NUL\NUL\NUL\SOH\NUL\NUL\NULb\EOT\NUL\NUL\NUL\n\NUL\NUL\NUL\EOT\NUL\NUL\NUL\132\STX\NUL\NUL\DC2\NUL\NUL\NUL\ENQ\NUL\NUL\NULhello\ENQ\NUL\NUL\NULworld)\NUL\NUL\NUL\SOH\NUL\NUL\NULc\EOT\NUL\NUL\NUL\b\NUL\NUL\NUL\EOT\NUL\NUL\NUL\132\STX\NUL\NUL\DLE\NUL\NUL\NUL\EOT\NUL\NUL\NUL\NUL\NUL\NUL\NUL\EOT\NUL\NUL\NULzero"
 
 main = do
-    print $ execParser (parseMany @Word32 parseEven) $ encode @[Word32]
+    print $ execParser (parseSome @Word32 parseEven) $ encode @[Word32]
         [1 .. 10] -- Lazy does not work
     print $ execParser (parseMany @Word32 parseEven) $ encode @[Word32]
         [2, 4 .. 10]
+    print $ testDecodeValue testEncodeValue
