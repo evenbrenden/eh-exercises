@@ -9,6 +9,7 @@ module FileArchiver where
 
 import           Control.Applicative
 import           Control.Monad
+import           Control.Monad.Fail
 import           Data.Bits                      ( (.&.)
                                                 , (.|.)
                                                 , shift
@@ -321,9 +322,82 @@ testDecodeValue =
 testEncodeValue =
     "\FS\NUL\NUL\NUL\SOH\NUL\NUL\NULa\EOT\NUL\NUL\NUL\ETX\NUL\NUL\NUL\EOT\NUL\NUL\NUL\243\STX\NUL\NUL\ETX\NUL\NUL\NULfoo+\NUL\NUL\NUL\SOH\NUL\NUL\NULb\EOT\NUL\NUL\NUL\n\NUL\NUL\NUL\EOT\NUL\NUL\NUL\132\STX\NUL\NUL\DC2\NUL\NUL\NUL\ENQ\NUL\NUL\NULhello\ENQ\NUL\NUL\NULworld)\NUL\NUL\NUL\SOH\NUL\NUL\NULc\EOT\NUL\NUL\NUL\b\NUL\NUL\NUL\EOT\NUL\NUL\NUL\132\STX\NUL\NUL\DLE\NUL\NUL\NUL\EOT\NUL\NUL\NUL\NUL\NUL\NUL\NUL\EOT\NUL\NUL\NULzero"
 
+instance Monad FilePackParser where
+    return = pure
+    valParser >>= mkParser = FilePackParser $ \input -> do
+        (val, rest) <- runParser valParser input
+        runParser (mkParser val) rest
+
+data FilePackImage
+    = FilePackPBM Word32 Word32 [Word32]
+    | FilePackPGM Word32 Word32 Word32 [Word32]
+    deriving (Eq, Show)
+
+instance Encode FilePackImage where
+    encode (FilePackPBM width height values) =
+        encode
+            $  encodeWithSize @String "pbm"
+            <> encodeWithSize width
+            <> encodeWithSize height
+        -- The Encode instance for list already includes size info
+            <> encode values
+    encode (FilePackPGM width height maxValue values) =
+        encode
+            $  encodeWithSize @String "pgm"
+            <> encodeWithSize width
+            <> encodeWithSize height
+            <> encodeWithSize maxValue
+        -- The Encode instance for list already includes size info
+            <> encode values
+
+instance Decode FilePackImage where
+    decode = execParser $ do
+        tag <- extractValue @String
+        case tag of
+            "pbm" ->
+                FilePackPBM
+                    <$> extractValue
+                    <*> extractValue
+                    <*> many extractValue
+            "pgm" ->
+                FilePackPGM
+                    <$> extractValue
+                    <*> extractValue
+                    <*> extractValue
+                    <*> many extractValue
+            otherTag -> FilePackParser
+                $ \_ -> Left $ "unknown image type tag: " <> otherTag
+
+parsePBM, parsePGM :: FilePackParser FilePackImage
+parsePBM = FilePackPBM <$> extractValue <*> extractValue <*> many extractValue
+parsePGM =
+    FilePackPGM
+        <$> extractValue
+        <*> extractValue
+        <*> extractValue
+        <*> many extractValue
+
+getNetpbmParser :: String -> FilePackParser FilePackImage
+getNetpbmParser tag = case tag of
+    "pbm" -> parsePBM
+    "pgm" -> parsePGM
+    otherTag ->
+        FilePackParser $ \_ -> Left $ "unknown image type tag: " <> otherTag
+
+getNetpbmTag :: FilePackParser String
+getNetpbmTag = extractValue
+
+parseImage
+    :: FilePackParser String
+    -> (String -> FilePackParser FilePackImage)
+    -> FilePackParser FilePackImage
+parseImage = (>>=)
+
+parseError :: String -> FilePackParser a
+parseError errMsg = FilePackParser (const $ Left errMsg)
+
+instance MonadFail FilePackParser where
+    fail errMsg = FilePackParser (const $ Left errMsg)
+
 main = do
-    print $ execParser (parseSome @Word32 parseEven) $ encode @[Word32]
-        [1 .. 10] -- Lazy does not work
-    print $ execParser (parseMany @Word32 parseEven) $ encode @[Word32]
-        [2, 4 .. 10]
     print $ testDecodeValue testEncodeValue
