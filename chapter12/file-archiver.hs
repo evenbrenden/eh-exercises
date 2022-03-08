@@ -140,52 +140,6 @@ newtype FilePack = FilePack [Packable]
 instance Encode FilePack where
     encode (FilePack p) = encode p
 
-naiveDecodeWord32 :: BS.ByteString -> Either String (Word32, BS.ByteString)
-naiveDecodeWord32 inputString = do
-    when (BS.length inputString < 4)
-        $ Left "Error, not enough data to get the size of the next field"
-    let (encodedSizePrefix, rest) = BS.splitAt 4 inputString
-    sizePrefix <- bytestringToWord32 encodedSizePrefix
-    when (sizePrefix /= 4) $ Left "the field size of a word should be 4"
-    when (BS.length rest < fromIntegral sizePrefix)
-        $ Left "Not enough data for the next field size"
-    let (encodedWord, rest') = BS.splitAt 4 rest
-    decodedWord <- decode encodedWord
-    pure (decodedWord, rest')
-
-naiveDecodedString :: BS.ByteString -> Either String (String, BS.ByteString)
-naiveDecodedString inputString = do
-    when (BS.length inputString < 4)
-        $ Left "Error, not enough data to get the size of the next field"
-    let (encodedSizePrefix, rest) = BS.splitAt 4 inputString
-    sizePrefix <- bytestringToWord32 encodedSizePrefix
-    when (BS.length rest < fromIntegral sizePrefix)
-        $ Left "Not enough data for the next field size"
-    let (encodedString, rest') = BS.splitAt 4 rest
-    decodedString <- decode encodedString
-    pure (decodedString, rest')
-
-extractBytes
-    :: Int -> BS.ByteString -> Either String (BS.ByteString, BS.ByteString)
-extractBytes n byteString = do
-    when (BS.length byteString < n)
-        $  Left
-        $  "Error, extract bytes needs at least "
-        <> show n
-        <> " bytes"
-    pure $ BS.splitAt n byteString
-
-nextSegmentSize :: BS.ByteString -> Either String (Word32, BS.ByteString)
-nextSegmentSize byteString = do
-    (nextSegmentStr, rest) <- extractBytes 4 byteString
-    parsedSegmentSize      <- bytestringToWord32 nextSegmentStr
-    pure (parsedSegmentSize, rest)
-
-nextSegment :: BS.ByteString -> Either String (BS.ByteString, BS.ByteString)
-nextSegment byteString = do
-    (segmentSize, rest) <- nextSegmentSize byteString
-    extractBytes (fromIntegral segmentSize) rest
-
 newtype FilePackParser a = FilePackParser
     { runParser :: BS.ByteString -> Either String (a, BS.ByteString) }
 
@@ -218,34 +172,6 @@ extractValue = FilePackParser $ \input -> do
 
 execParser :: FilePackParser a -> BS.ByteString -> Either String a
 execParser parser inputString = fst <$> runParser parser inputString
-
-data SomeRecord = SomeRecord
-    { recordNumber :: Word32
-    , recordString :: String
-    , recordTuple  :: (Word32, String)
-    }
-    deriving (Eq, Show)
-
-exampleRecord :: SomeRecord
-exampleRecord = SomeRecord 1 "two" (3, "four")
-
-packRecord :: SomeRecord -> BS.ByteString
-packRecord SomeRecord {..} =
-    encodeWithSize recordNumber
-        <> encodeWithSize recordString
-        <> encodeWithSize (fst recordTuple)
-        <> encodeWithSize (snd recordTuple)
-
-someRecordParser :: BS.ByteString -> Either String SomeRecord
-someRecordParser =
-    execParser
-        $   SomeRecord
-        <$> extractValue
-        <*> extractValue
-        <*> ((,) <$> extractValue <*> extractValue)
-
-getSeveralRecords :: [BS.ByteString] -> Either String [SomeRecord]
-getSeveralRecords = traverse someRecordParser
 
 instance (Decode a, Decode b) => Decode (a,b) where
     decode = execParser $ (,) <$> extractValue <*> extractValue
@@ -297,15 +223,17 @@ instance Alternative FilePackParser where
     parserA <|> parserB = FilePackParser $ \s -> case runParser parserA s of
         Right val  -> Right val
         Left  errA -> runParser parserB s
-
-extractOptional :: FilePackParser a -> FilePackParser (Maybe a)
-extractOptional = (<|> pure Nothing) . fmap Just
+    some = parseSome
+    many = parseMany
 
 parseSome :: FilePackParser a -> FilePackParser [a]
 parseSome p = (:) <$> p <*> parseMany p
 
 parseMany :: FilePackParser a -> FilePackParser [a]
 parseMany p = parseSome p <|> pure []
+
+extractOptional :: FilePackParser a -> FilePackParser (Maybe a)
+extractOptional = (<|> pure Nothing) . fmap Just
 
 instance {-# OVERLAPPABLE #-} Decode a => Decode [a] where
     decode = execParser (many extractValue)
@@ -339,7 +267,7 @@ instance Encode FilePackImage where
             $  encodeWithSize @String "pbm"
             <> encodeWithSize width
             <> encodeWithSize height
-        -- The Encode instance for list already includes size info
+            -- The Encode instance for list already includes size info
             <> encode values
     encode (FilePackPGM width height maxValue values) =
         encode
@@ -347,7 +275,7 @@ instance Encode FilePackImage where
             <> encodeWithSize width
             <> encodeWithSize height
             <> encodeWithSize maxValue
-        -- The Encode instance for list already includes size info
+            -- The Encode instance for list already includes size info
             <> encode values
 
 instance Decode FilePackImage where
