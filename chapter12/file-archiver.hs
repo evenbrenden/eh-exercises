@@ -203,6 +203,21 @@ runRoundTripTest = testRoundTrip $ FileData
     , packedFileData        = (0, "zero") :: (Word32, String)
     }
 
+extractValues :: Decode a => FilePackParser [a]
+extractValues = FilePackParser $ \input -> if BS.null input
+    then Right ([], "")
+    else do
+        (val , rest ) <- runParser extractValue input
+        (tail, rest') <- runParser extractValues rest
+        pure (val : tail, rest')
+
+parseEven :: FilePackParser Word32
+parseEven = FilePackParser $ \input -> do
+    (val, rest) <- runParser extractValue input
+    if even val
+        then pure (val, rest)
+        else Left "Cannot extract a non-even value"
+
 instance Alternative FilePackParser where
     empty = FilePackParser $ const (Left "empty parser")
     parserA <|> parserB = FilePackParser $ \s -> case runParser parserA s of
