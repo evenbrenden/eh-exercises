@@ -203,20 +203,19 @@ runRoundTripTest = testRoundTrip $ FileData
     , packedFileData        = (0, "zero") :: (Word32, String)
     }
 
-extractValues :: Decode a => FilePackParser [a]
-extractValues = FilePackParser $ \input -> if BS.null input
-    then Right ([], "")
-    else do
-        (val , rest ) <- runParser extractValue input
-        (tail, rest') <- runParser extractValues rest
-        pure (val : tail, rest')
-
 parseEven :: FilePackParser Word32
 parseEven = FilePackParser $ \input -> do
     (val, rest) <- runParser extractValue input
     if even val
         then pure (val, rest)
         else Left "Cannot extract a non-even value"
+
+test :: IO ()
+test = do
+    print $ execParser (parseMany @Word32 parseEven) $ encode @[Word32]
+        [1 .. 10] -- Data.ByteString is strict so no [1 ..]
+    print $ execParser (parseSome @Word32 parseEven) $ encode @[Word32]
+        [2, 4 .. 10]
 
 instance Alternative FilePackParser where
     empty = FilePackParser $ const (Left "empty parser")
