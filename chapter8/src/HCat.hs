@@ -157,7 +157,7 @@ getNextStep :: IO NextStep
 getNextStep = do
     hSetBuffering stdin NoBuffering
     hSetEcho stdin False
-    input <- hGetChar stdin
+    input <- getChar
     case input of
         'b' -> return Backward
         'f' -> return Forward
