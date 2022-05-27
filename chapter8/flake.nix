@@ -2,8 +2,7 @@
 {
   description = "hcat";
   inputs.haskellNix.url = "github:input-output-hk/haskell.nix";
-  inputs.nixpkgs.url =
-    "github:NixOS/nixpkgs/08370e1e271f6fe00d302bebbe510fe0e2c611ca";
+  inputs.nixpkgs.follows = "haskellNix/nixpkgs-unstable";
   inputs.flake-utils.url = "github:numtide/flake-utils";
   outputs = { self, nixpkgs, flake-utils, haskellNix }:
     flake-utils.lib.eachSystem [ "x86_64-linux" ] (system:
