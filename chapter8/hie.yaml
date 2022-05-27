@@ -1,0 +1,10 @@
+cradle:
+  cabal:
+    - path: "src"
+      component: "lib:hcat"
+
+    - path: "app/Main.hs"
+      component: "hcat:exe:hcat"
+
+    - path: "test"
+      component: "hcat:test:test"
