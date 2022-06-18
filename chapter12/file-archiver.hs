@@ -2,7 +2,6 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
-{-# LANGUAGE TupleSections #-}
 {-# LANGUAGE TypeApplications #-}
 
 module FileArchiver where
@@ -42,7 +41,7 @@ class Encode a where
         let s = encode a
             l = fromIntegral $ BS.length s
         in word32ToByteString l <> s
-    {- MINIMAL encode | encodeWithSize #-}
+    {-# MINIMAL encode | encodeWithSize #-}
 
 class Decode a where
     decode :: BS.ByteString -> Either String a
@@ -164,7 +163,7 @@ extractValue = FilePackParser $ \input -> do
     when (BS.length rest < segmentSize)
         $  Left
         $  "not enough input to parse the next value"
-        <> (show input)
+        <> show input
     let (rawSegmentValue, rest') = BS.splitAt segmentSize rest
     case decode rawSegmentValue of
         Left  err -> Left err
@@ -326,5 +325,4 @@ parseError errMsg = FilePackParser (const $ Left errMsg)
 instance MonadFail FilePackParser where
     fail errMsg = FilePackParser (const $ Left errMsg)
 
-main = do
-    print $ testDecodeValue testEncodeValue
+main = print $ testDecodeValue testEncodeValue
