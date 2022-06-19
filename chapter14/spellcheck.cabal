@@ -4,7 +4,9 @@ version:        0.1.0.0
 
 library
   hs-source-dirs: src
-  exposed-modules: SpellCheck.Naive
+  exposed-modules:
+      Naive
+    , Types
   build-depends:
       base
     , containers
