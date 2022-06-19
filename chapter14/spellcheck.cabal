@@ -5,8 +5,9 @@ version:        0.1.0.0
 library
   hs-source-dirs: src
   exposed-modules:
-      Naive
-    , Types
+    Naive
+  other-modules:
+    Types
   build-depends:
       base
     , containers
