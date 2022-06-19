@@ -5,9 +5,8 @@ version:        0.1.0.0
 library
   hs-source-dirs: src
   exposed-modules:
-    Naive
-  other-modules:
-    Types
+      Naive
+    , Types
   build-depends:
       base
     , containers
@@ -18,5 +17,7 @@ library
 executable spellcheck
   hs-source-dirs: app
   main-is: Main.hs
-  build-depends: base, spellcheck
+  build-depends:
+      base
+    , spellcheck
   default-language: Haskell2010
