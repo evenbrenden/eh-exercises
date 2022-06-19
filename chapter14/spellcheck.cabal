@@ -1,0 +1,19 @@
+cabal-version:  2.4
+name:           spellcheck
+version:        0.1.0.0
+
+library
+  hs-source-dirs: src
+  exposed-modules: SpellCheck.Naive
+  build-depends:
+      base
+    , containers
+    , text
+    , vector
+  default-language: Haskell2010
+
+executable spellcheck
+  hs-source-dirs: app
+  main-is: Main.hs
+  build-depends: base, spellcheck
+  default-language: Haskell2010

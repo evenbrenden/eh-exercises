@@ -1,0 +1,7 @@
+cradle:
+  cabal:
+    - path: "src"
+      component: "lib:spellcheck"
+
+    - path: "app/Main.hs"
+      component: "spellcheck:exe:spellcheck"
