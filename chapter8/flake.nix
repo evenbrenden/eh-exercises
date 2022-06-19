@@ -14,12 +14,7 @@
             hcatProject = final.haskell-nix.project' {
               src = ./.;
               compiler-nix-name = "ghc8107";
-              shell.tools = {
-                cabal = { };
-                haskell-language-server = { };
-                hlint = { };
-              };
-              shell.buildInputs = with pkgs; [ nixfmt ];
+              shell.tools = { cabal = { }; };
             };
           })
         ];
