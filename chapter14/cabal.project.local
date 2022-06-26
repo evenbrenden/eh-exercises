@@ -1,0 +1,6 @@
+profiling: True
+library-profiling: True
+optimization: 2
+
+package *
+  ghc-options: -rtsopts -fprof-auto
