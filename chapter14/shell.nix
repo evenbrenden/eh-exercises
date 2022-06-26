@@ -12,7 +12,7 @@ let
         isLibrary = true;
         isExecutable = true;
         libraryHaskellDepends = [ base containers text vector ];
-        executableHaskellDepends = [ base ];
+        executableHaskellDepends = [ base text ];
         license = "unknown";
         hydraPlatforms = lib.platforms.none;
       };

@@ -20,4 +20,5 @@ executable spellcheck
   build-depends:
       base
     , spellcheck
+    , text
   default-language: Haskell2010
