@@ -1,0 +1,54 @@
+	Sun Jun 26 22:54 2022 Time and Allocation Profiling Report  (Final)
+
+	   spellcheck +RTS -s -p -RTS words.txt helllo.txt quiet listmemo
+
+	total time  =        1.40 secs   (1396 ticks @ 1000 us, 1 processor)
+	total alloc = 2,122,803,264 bytes  (excludes profiling overheads)
+
+COST CENTRE                             MODULE    SRC                             %time %alloc
+
+editDistance.lookupEditDistance         ListMemo  src/ListMemo.hs:14:5-60          54.1    0.0
+editDistance.getEditDistance            ListMemo  src/ListMemo.hs:(17,5)-(28,60)   24.2   23.5
+editDistance.distances.\                ListMemo  src/ListMemo.hs:13:23-60         11.7   63.2
+editDistance.getEditDistance.deleteCost ListMemo  src/ListMemo.hs:25:15-61          2.2    0.0
+main                                    Main      app/Main.hs:(14,1)-(24,25)        2.1    4.2
+editDistance.getEditDistance.insertCost ListMemo  src/ListMemo.hs:26:15-61          1.9    0.0
+editDistance.getEditDistance.swapCost   ListMemo  src/ListMemo.hs:27:15-67          1.8    0.0
+editDistance.distances                  ListMemo  src/ListMemo.hs:(12,5)-(13,73)    1.4    8.4
+
+
+                                                                                                                             individual      inherited
+COST CENTRE                                        MODULE                  SRC                            no.     entries  %time %alloc   %time %alloc
+
+MAIN                                               MAIN                    <built-in>                     198           0    0.0    0.0   100.0  100.0
+ CAF                                               Main                    <entire-module>                395           0    0.0    0.0     0.0    0.0
+  main                                             Main                    app/Main.hs:(14,1)-(24,25)     396           1    0.0    0.0     0.0    0.0
+ CAF                                               GHC.Conc.Signal         <entire-module>                316           0    0.0    0.0     0.0    0.0
+ CAF                                               GHC.IO.Encoding         <entire-module>                297           0    0.0    0.0     0.0    0.0
+ CAF                                               GHC.IO.Encoding.Iconv   <entire-module>                295           0    0.0    0.0     0.0    0.0
+ CAF                                               GHC.IO.Exception        <entire-module>                289           0    0.0    0.0     0.0    0.0
+ CAF                                               GHC.IO.Handle.FD        <entire-module>                287           0    0.0    0.0     0.0    0.0
+ CAF                                               GHC.IO.Handle.Internals <entire-module>                286           0    0.0    0.0     0.0    0.0
+ CAF                                               GHC.IO.Handle.Text      <entire-module>                285           0    0.0    0.0     0.0    0.0
+ CAF                                               GHC.IO.FD               <entire-module>                228           0    0.0    0.0     0.0    0.0
+ main                                              Main                    app/Main.hs:(14,1)-(24,25)     397           0    2.1    4.2   100.0  100.0
+  main.result                                      Main                    app/Main.hs:(19,9)-(22,54)     398           1    0.0    0.0    97.9   95.8
+   spellcheck                                      ListMemo                src/ListMemo.hs:(43,1)-(44,51) 399           1    0.0    0.0    97.9   95.8
+    spellcheckWord                                 ListMemo                src/ListMemo.hs:(31,1)-(40,58) 400           1    0.0    0.0    97.9   95.8
+     spellcheckWord.getSuggestions                 ListMemo                src/ListMemo.hs:(33,5)-(40,58) 401      123383    0.1    0.0    97.9   95.8
+      spellcheckWord.getSuggestions.distance       ListMemo                src/ListMemo.hs:39:9-47        402      123382    0.1    0.0    97.7   95.8
+       editDistance                                ListMemo                src/ListMemo.hs:(10,1)-(28,60) 403      123382    0.1    0.6    97.6   95.8
+        editDistance.aLen                          ListMemo                src/ListMemo.hs:15:5-27        405      123382    0.2    0.1     0.2    0.1
+        editDistance.bLen                          ListMemo                src/ListMemo.hs:16:5-27        408      123382    0.1    0.1     0.1    0.1
+        editDistance.distances                     ListMemo                src/ListMemo.hs:(12,5)-(13,73) 406      123382    1.4    8.4    97.0   95.1
+         editDistance.distances.\                  ListMemo                src/ListMemo.hs:13:23-60       407     1189140   11.7   63.2    95.6   86.6
+          editDistance.getEditDistance             ListMemo                src/ListMemo.hs:(17,5)-(28,60) 409     8066319   24.2   23.5    83.9   23.5
+           editDistance.getEditDistance.deleteCost ListMemo                src/ListMemo.hs:25:15-61       410     5849551    2.2    0.0    18.1    0.0
+            editDistance.lookupEditDistance        ListMemo                src/ListMemo.hs:14:5-60        411     5849551   15.9    0.0    15.9    0.0
+           editDistance.getEditDistance.insertCost ListMemo                src/ListMemo.hs:26:15-61       412     5849551    1.9    0.0    19.4    0.0
+            editDistance.lookupEditDistance        ListMemo                src/ListMemo.hs:14:5-60        413     5849551   17.6    0.0    17.6    0.0
+           editDistance.getEditDistance.swapCost   ListMemo                src/ListMemo.hs:27:15-67       414     5849551    1.8    0.0    20.7    0.0
+            editDistance.lookupEditDistance        ListMemo                src/ListMemo.hs:14:5-60        415     5849551   18.9    0.0    18.9    0.0
+           editDistance.lookupEditDistance         ListMemo                src/ListMemo.hs:14:5-60        416      338753    1.4    0.0     1.4    0.0
+        editDistance.lookupEditDistance            ListMemo                src/ListMemo.hs:14:5-60        404      123382    0.3    0.0     0.3    0.0
+  main.threshold                                   Main                    app/Main.hs:18:9-21            417           1    0.0    0.0     0.0    0.0

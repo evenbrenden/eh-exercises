@@ -1,23 +1,31 @@
 {-# OPTIONS_GHC -fno-full-laziness #-}
 
-module Naive where
+module ListMemo where
 
 import           Data.Text                      ( Text )
 import qualified Data.Text                     as T
 import           Types
 
 editDistance :: Text -> Text -> Int
-editDistance stringA stringB
-    | T.null stringA                   = T.length stringB
-    | T.null stringB                   = T.length stringA
-    | T.head stringA == T.head stringB = editDistance restOfA restOfB
-    | otherwise = 1 + minimum [insertCost, deleteCost, swapCost]
+editDistance stringA stringB = lookupEditDistance 0 0
   where
-    restOfA    = T.tail stringA
-    restOfB    = T.tail stringB
-    deleteCost = editDistance restOfA stringB
-    insertCost = editDistance stringA restOfB
-    swapCost   = editDistance restOfA restOfB
+    distances =
+        map (\idxA -> map (getEditDistance idxA) [0 .. bLen]) [0 .. aLen]
+    lookupEditDistance idxA idxB = distances !! idxA !! idxB
+    aLen = T.length stringA
+    bLen = T.length stringB
+    getEditDistance idxA idxB
+        | idxA == aLen
+        = bLen - idxB
+        | idxB == bLen
+        = aLen - idxA
+        | T.index stringA idxA == T.index stringB idxB
+        = lookupEditDistance (idxA + 1) (idxB + 1)
+        | otherwise
+        = let deleteCost = lookupEditDistance (idxA + 1) idxB
+              insertCost = lookupEditDistance idxA (idxB + 1)
+              swapCost   = lookupEditDistance (idxA + 1) (idxB + 1)
+          in  1 + minimum [deleteCost, insertCost, swapCost]
 
 spellcheckWord :: [Text] -> Int -> Text -> [SuggestedMatch]
 spellcheckWord dictionary threshold word = getSuggestions dictionary []

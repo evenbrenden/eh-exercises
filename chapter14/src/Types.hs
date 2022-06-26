@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -fno-full-laziness #-}
 {-# LANGUAGE RecordWildCards #-}
 
 module Types where
