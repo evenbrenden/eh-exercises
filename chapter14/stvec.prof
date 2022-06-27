@@ -1,0 +1,59 @@
+	Mon Jun 27 21:04 2022 Time and Allocation Profiling Report  (Final)
+
+	   spellcheck +RTS -s -p -RTS words.txt helllo.txt quiet stvec
+
+	total time  =        0.87 secs   (869 ticks @ 1000 us, 1 processor)
+	total alloc = 1,696,018,288 bytes  (excludes profiling overheads)
+
+COST CENTRE           MODULE    SRC                           %time %alloc
+
+editDistance.\.\      STVec     src/STVec.hs:(28,37)-(37,60)   57.5   63.0
+editDistance.\        STVec     src/STVec.hs:(27,33)-(37,60)   12.0    3.0
+editDistance          STVec     src/STVec.hs:(18,1)-(38,43)    10.7    6.4
+editDistance.\.\.cost STVec     src/STVec.hs:29:17-54           4.5    0.0
+main                  Main      app/Main.hs:(16,1)-(28,25)      3.9    5.2
+editDistance.bs       STVec     src/STVec.hs:22:9-44            2.5    7.5
+editDistance.as       STVec     src/STVec.hs:21:9-44            2.5   10.7
+editDistance.\        STVec     src/STVec.hs:25:32-71           2.5    2.2
+editDistance.\        STVec     src/STVec.hs:26:32-71           2.4    1.6
+
+
+                                                                                                                        individual      inherited
+COST CENTRE                                  MODULE                  SRC                             no.     entries  %time %alloc   %time %alloc
+
+MAIN                                         MAIN                    <built-in>                      232           0    0.0    0.0   100.0  100.0
+ CAF                                         Main                    <entire-module>                 463           0    0.0    0.0     0.0    0.0
+  main                                       Main                    app/Main.hs:(16,1)-(28,25)      464           1    0.0    0.0     0.0    0.0
+ CAF                                         GHC.Conc.Signal         <entire-module>                 351           0    0.0    0.0     0.0    0.0
+ CAF                                         GHC.IO.Encoding         <entire-module>                 332           0    0.0    0.0     0.0    0.0
+ CAF                                         GHC.IO.Encoding.Iconv   <entire-module>                 330           0    0.0    0.0     0.0    0.0
+ CAF                                         GHC.IO.Exception        <entire-module>                 324           0    0.0    0.0     0.0    0.0
+ CAF                                         GHC.IO.Handle.FD        <entire-module>                 322           0    0.0    0.0     0.0    0.0
+ CAF                                         GHC.IO.Handle.Internals <entire-module>                 321           0    0.0    0.0     0.0    0.0
+ CAF                                         GHC.IO.Handle.Text      <entire-module>                 320           0    0.0    0.0     0.0    0.0
+ CAF                                         GHC.IO.FD               <entire-module>                 262           0    0.0    0.0     0.0    0.0
+ main                                        Main                    app/Main.hs:(16,1)-(28,25)      465           0    3.9    5.2   100.0  100.0
+  main.result                                Main                    app/Main.hs:(21,9)-(26,54)      466           1    0.0    0.0    96.1   94.8
+   spellcheck                                STVec                   src/STVec.hs:(53,1)-(54,51)     467           1    0.0    0.0    96.1   94.8
+    spellcheckWord                           STVec                   src/STVec.hs:(41,1)-(50,58)     468           1    0.0    0.0    96.1   94.8
+     spellcheckWord.getSuggestions           STVec                   src/STVec.hs:(43,5)-(50,58)     469      123383    0.1    0.0    96.1   94.8
+      spellcheckWord.getSuggestions.distance STVec                   src/STVec.hs:49:9-47            470      123382    0.2    0.0    96.0   94.8
+       editDistance                          STVec                   src/STVec.hs:(18,1)-(38,43)     471      123382   10.7    6.4    95.7   94.8
+        editDistance.\                       STVec                   src/STVec.hs:25:32-71           474     1189140    2.5    2.2     2.5    2.2
+         editDistance.lookupIndex            STVec                   src/STVec.hs:23:9-46            475     1189140    0.0    0.0     0.0    0.0
+         marray#                             Data.Primitive.Array    Data/Primitive/Array.hs:84:5-11 476     1189140    0.0    0.0     0.0    0.0
+        editDistance.\                       STVec                   src/STVec.hs:(27,33)-(37,60)    481     1065758   12.0    3.0    74.8   66.0
+         editDistance.\.\                    STVec                   src/STVec.hs:(28,37)-(37,60)    483     6394548   57.5   63.0    62.8   63.0
+          editDistance.lookupIndex           STVec                   src/STVec.hs:23:9-46            484    25578192    0.8    0.0     0.8    0.0
+          marray#                            Data.Primitive.Array    Data/Primitive/Array.hs:84:5-11 485    25578192    0.0    0.0     0.0    0.0
+          editDistance.\.\.cost              STVec                   src/STVec.hs:29:17-54           488     6394548    4.5    0.0     4.5    0.0
+        editDistance.\                       STVec                   src/STVec.hs:26:32-71           477      863674    2.4    1.6     2.4    1.6
+         editDistance.lookupIndex            STVec                   src/STVec.hs:23:9-46            478      863674    0.0    0.0     0.0    0.0
+         marray#                             Data.Primitive.Array    Data/Primitive/Array.hs:84:5-11 479      863674    0.0    0.0     0.0    0.0
+        editDistance.aLen                    STVec                   src/STVec.hs:19:9-31            472      123382    0.0    0.1     0.0    0.1
+        editDistance.as                      STVec                   src/STVec.hs:21:9-44            480      123382    2.5   10.7     2.5   10.7
+        editDistance.bLen                    STVec                   src/STVec.hs:20:9-31            473      123382    0.2    0.1     0.2    0.1
+        editDistance.bs                      STVec                   src/STVec.hs:22:9-44            482      123382    2.5    7.5     2.5    7.5
+        editDistance.lookupIndex             STVec                   src/STVec.hs:23:9-46            486      123382    0.0    0.0     0.0    0.0
+        marray#                              Data.Primitive.Array    Data/Primitive/Array.hs:84:5-11 487      123382    0.0    0.0     0.0    0.0
+  main.threshold                             Main                    app/Main.hs:20:9-21             489           1    0.0    0.0     0.0    0.0

@@ -7,7 +7,8 @@ import           Control.Monad                  ( when )
 import qualified Data.Text                     as T
 import qualified ListMemo
 import qualified Naive
-import qualified ST
+import qualified STRef
+import qualified STVec
 import qualified System.Environment            as Env
 import           Types
 
@@ -20,7 +21,8 @@ main = do
     let result
             | algo == "listmemo" = ListMemo.spellcheck dict threshold check
             | algo == "naive"    = Naive.spellcheck dict threshold check
-            | algo == "st"       = ST.spellcheck dict threshold check
+            | algo == "stref"    = STRef.spellcheck dict threshold check
+            | algo == "stvec"    = STVec.spellcheck dict threshold check
             | otherwise          = fail "unknown algo"
     when (verbosity == "verbose") $ print (showSuggestedMatch <$> result)
     print $ length result

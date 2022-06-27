@@ -1,6 +1,6 @@
 {-# OPTIONS_GHC -fno-full-laziness #-}
 
-module ST where
+module STRef where
 
 import           Control.Monad
 import           Control.Monad.ST
@@ -50,12 +50,6 @@ editDistance cache = memoizedEditDistance
       where
         restOfA = T.tail stringA
         restOfB = T.tail stringB
-
-cacheSuffixDistances :: MemoCache s -> Text -> [Text] -> ST s ()
-cacheSuffixDistances cache dictWord = traverse_ cacheSuffix
-  where
-    cacheSuffix suffix =
-        updateCache cache dictWord (dictWord <> suffix) (T.length suffix)
 
 spellcheckWord :: MemoCache s -> [Text] -> Int -> Text -> ST s [SuggestedMatch]
 spellcheckWord cache dictionary threshold word = foldM getSuggestions

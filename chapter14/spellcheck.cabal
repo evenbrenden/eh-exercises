@@ -7,7 +7,8 @@ library
   exposed-modules:
       ListMemo
     , Naive
-    , ST
+    , STRef
+    , STVec
     , Types
   build-depends:
       base
