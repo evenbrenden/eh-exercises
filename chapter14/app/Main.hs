@@ -6,6 +6,7 @@ module Main where
 import           Control.Monad                  ( when )
 import qualified Data.Text                     as T
 import qualified ListMemo
+import qualified Micro
 import qualified Naive
 import qualified STRef
 import qualified STVec
@@ -23,6 +24,7 @@ main = do
             | algo == "naive"    = Naive.spellcheck dict threshold check
             | algo == "stref"    = STRef.spellcheck dict threshold check
             | algo == "stvec"    = STVec.spellcheck dict threshold check
+            | algo == "micro"    = Micro.spellcheck dict threshold check
             | otherwise          = fail "unknown algo"
     when (verbosity == "verbose") $ print (showSuggestedMatch <$> result)
     print $ length result
