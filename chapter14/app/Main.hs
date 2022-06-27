@@ -13,6 +13,10 @@ import qualified STVec
 import qualified System.Environment            as Env
 import           Types
 
+-- Handling Correctly Spelled Words PASS
+-- Remembering Common Typos PASS
+-- Spellchecking In HCat PASS
+
 main :: IO ()
 main = do
     [dictPath, checkPath, verbosity, algo] <- Env.getArgs
