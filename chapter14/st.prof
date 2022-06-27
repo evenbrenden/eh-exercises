@@ -1,0 +1,49 @@
+	Mon Jun 27 18:48 2022 Time and Allocation Profiling Report  (Final)
+
+	   spellcheck +RTS -s -p -RTS words.txt helllo.txt quiet st
+
+	total time  =        1.58 secs   (1577 ticks @ 1000 us, 1 processor)
+	total alloc = 823,739,656 bytes  (excludes profiling overheads)
+
+COST CENTRE                       MODULE SRC                         %time %alloc
+
+readCache                         ST     src/ST.hs:(18,1)-(19,51)     64.7    7.7
+updateCache                       ST     src/ST.hs:(22,1)-(23,60)     27.1   52.9
+editDistance.memoizedEditDistance ST     src/ST.hs:(31,5)-(38,32)      2.7    9.1
+editDistance.findDistance         ST     src/ST.hs:(40,5)-(52,32)      2.4   16.6
+main                              Main   app/Main.hs:(15,1)-(26,25)    2.4   10.8
+editDistance.findDistance.restOfA ST     src/ST.hs:51:9-32             0.1    1.5
+editDistance                      ST     src/ST.hs:(29,1)-(52,32)      0.1    1.4
+
+
+                                                                                                                 individual      inherited
+COST CENTRE                                MODULE                  SRC                        no.     entries  %time %alloc   %time %alloc
+
+MAIN                                       MAIN                    <built-in>                 199           0    0.0    0.0   100.0  100.0
+ CAF                                       Main                    <entire-module>            397           0    0.0    0.0     0.0    0.0
+  main                                     Main                    app/Main.hs:(15,1)-(26,25) 398           1    0.0    0.0     0.0    0.0
+ CAF                                       ST                      <entire-module>            394           0    0.0    0.0     0.0    0.0
+  newCache                                 ST                      src/ST.hs:26:1-43          402           1    0.0    0.0     0.0    0.0
+ CAF                                       Data.Text.Array         <entire-module>            391           0    0.0    0.0     0.0    0.0
+ CAF                                       GHC.Conc.Signal         <entire-module>            317           0    0.0    0.0     0.0    0.0
+ CAF                                       GHC.IO.Encoding         <entire-module>            298           0    0.0    0.0     0.0    0.0
+ CAF                                       GHC.IO.Encoding.Iconv   <entire-module>            296           0    0.0    0.0     0.0    0.0
+ CAF                                       GHC.IO.Exception        <entire-module>            290           0    0.0    0.0     0.0    0.0
+ CAF                                       GHC.IO.Handle.FD        <entire-module>            288           0    0.0    0.0     0.0    0.0
+ CAF                                       GHC.IO.Handle.Internals <entire-module>            287           0    0.0    0.0     0.0    0.0
+ CAF                                       GHC.IO.Handle.Text      <entire-module>            286           0    0.0    0.0     0.0    0.0
+ CAF                                       GHC.IO.FD               <entire-module>            229           0    0.0    0.0     0.0    0.0
+ main                                      Main                    app/Main.hs:(15,1)-(26,25) 399           0    2.4   10.8   100.0  100.0
+  main.result                              Main                    app/Main.hs:(20,9)-(24,54) 400           1    0.0    0.0    97.6   89.2
+   spellcheck                              ST                      src/ST.hs:(74,1)-(76,73)   401           1    0.0    0.0    97.6   89.2
+    spellcheckWord                         ST                      src/ST.hs:(61,1)-(71,33)   404           1    0.1    0.0    97.6   89.2
+     spellcheckWord.getSuggestions         ST                      src/ST.hs:(65,5)-(71,33)   405      123382    0.2    0.0    97.5   89.2
+      editDistance                         ST                      src/ST.hs:(29,1)-(52,32)   406      123382    0.1    1.4    97.3   89.2
+       editDistance.memoizedEditDistance   ST                      src/ST.hs:(31,5)-(38,32)   407     1235464    2.7    9.1    97.1   87.8
+        readCache                          ST                      src/ST.hs:(18,1)-(19,51)   408     1235464   64.7    7.7    64.7    7.7
+        editDistance.findDistance          ST                      src/ST.hs:(40,5)-(52,32)   409      380808    2.4   16.6     2.5   18.1
+         editDistance.findDistance.restOfA ST                      src/ST.hs:51:9-32          410      380802    0.1    1.5     0.1    1.5
+         editDistance.findDistance.restOfB ST                      src/ST.hs:52:9-32          413       15162    0.0    0.1     0.0    0.1
+        updateCache                        ST                      src/ST.hs:(22,1)-(23,60)   411      380808   27.1   52.9    27.1   52.9
+    newCache                               ST                      src/ST.hs:26:1-43          403           0    0.0    0.0     0.0    0.0
+  main.threshold                           Main                    app/Main.hs:19:9-21        412           1    0.0    0.0     0.0    0.0
