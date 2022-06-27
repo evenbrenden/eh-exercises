@@ -44,8 +44,8 @@ editDistance cache = memoizedEditDistance
                                                                   restOfB
         | otherwise = do
             deleteCost <- memoizedEditDistance restOfA stringB
-            insertCost <- memoizedEditDistance restOfA stringB
-            swapCost   <- memoizedEditDistance restOfA stringB
+            insertCost <- memoizedEditDistance stringA restOfB
+            swapCost   <- memoizedEditDistance restOfA restOfB
             pure $ 1 + minimum [insertCost, deleteCost, swapCost]
       where
         restOfA = T.tail stringA

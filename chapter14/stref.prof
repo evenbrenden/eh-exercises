@@ -1,49 +1,49 @@
-	Mon Jun 27 18:48 2022 Time and Allocation Profiling Report  (Final)
+	Mon Jun 27 21:08 2022 Time and Allocation Profiling Report  (Final)
 
-	   spellcheck +RTS -s -p -RTS words.txt helllo.txt quiet st
+	   spellcheck +RTS -s -p -RTS words.txt helllo.txt quiet stref
 
-	total time  =        1.58 secs   (1577 ticks @ 1000 us, 1 processor)
-	total alloc = 823,739,656 bytes  (excludes profiling overheads)
+	total time  =        6.28 secs   (6275 ticks @ 1000 us, 1 processor)
+	total alloc = 5,253,809,576 bytes  (excludes profiling overheads)
 
-COST CENTRE                       MODULE SRC                         %time %alloc
+COST CENTRE                       MODULE SRC                          %time %alloc
 
-readCache                         ST     src/ST.hs:(18,1)-(19,51)     64.7    7.7
-updateCache                       ST     src/ST.hs:(22,1)-(23,60)     27.1   52.9
-editDistance.memoizedEditDistance ST     src/ST.hs:(31,5)-(38,32)      2.7    9.1
-editDistance.findDistance         ST     src/ST.hs:(40,5)-(52,32)      2.4   16.6
-main                              Main   app/Main.hs:(15,1)-(26,25)    2.4   10.8
-editDistance.findDistance.restOfA ST     src/ST.hs:51:9-32             0.1    1.5
-editDistance                      ST     src/ST.hs:(29,1)-(52,32)      0.1    1.4
+readCache                         STRef  src/STRef.hs:(18,1)-(19,51)   53.6    5.9
+updateCache                       STRef  src/STRef.hs:(22,1)-(23,60)   37.0   64.3
+editDistance.findDistance         STRef  src/STRef.hs:(40,5)-(52,32)    4.6   18.9
+editDistance.memoizedEditDistance STRef  src/STRef.hs:(31,5)-(38,32)    3.2    6.2
+main                              Main   app/Main.hs:(16,1)-(28,25)     0.7    1.7
+editDistance.findDistance.restOfB STRef  src/STRef.hs:52:9-32           0.5    1.3
+editDistance.findDistance.restOfA STRef  src/STRef.hs:51:9-32           0.3    1.3
 
 
-                                                                                                                 individual      inherited
-COST CENTRE                                MODULE                  SRC                        no.     entries  %time %alloc   %time %alloc
+                                                                                                                  individual      inherited
+COST CENTRE                                MODULE                  SRC                         no.     entries  %time %alloc   %time %alloc
 
-MAIN                                       MAIN                    <built-in>                 199           0    0.0    0.0   100.0  100.0
- CAF                                       Main                    <entire-module>            397           0    0.0    0.0     0.0    0.0
-  main                                     Main                    app/Main.hs:(15,1)-(26,25) 398           1    0.0    0.0     0.0    0.0
- CAF                                       ST                      <entire-module>            394           0    0.0    0.0     0.0    0.0
-  newCache                                 ST                      src/ST.hs:26:1-43          402           1    0.0    0.0     0.0    0.0
- CAF                                       Data.Text.Array         <entire-module>            391           0    0.0    0.0     0.0    0.0
- CAF                                       GHC.Conc.Signal         <entire-module>            317           0    0.0    0.0     0.0    0.0
- CAF                                       GHC.IO.Encoding         <entire-module>            298           0    0.0    0.0     0.0    0.0
- CAF                                       GHC.IO.Encoding.Iconv   <entire-module>            296           0    0.0    0.0     0.0    0.0
- CAF                                       GHC.IO.Exception        <entire-module>            290           0    0.0    0.0     0.0    0.0
- CAF                                       GHC.IO.Handle.FD        <entire-module>            288           0    0.0    0.0     0.0    0.0
- CAF                                       GHC.IO.Handle.Internals <entire-module>            287           0    0.0    0.0     0.0    0.0
- CAF                                       GHC.IO.Handle.Text      <entire-module>            286           0    0.0    0.0     0.0    0.0
- CAF                                       GHC.IO.FD               <entire-module>            229           0    0.0    0.0     0.0    0.0
- main                                      Main                    app/Main.hs:(15,1)-(26,25) 399           0    2.4   10.8   100.0  100.0
-  main.result                              Main                    app/Main.hs:(20,9)-(24,54) 400           1    0.0    0.0    97.6   89.2
-   spellcheck                              ST                      src/ST.hs:(74,1)-(76,73)   401           1    0.0    0.0    97.6   89.2
-    spellcheckWord                         ST                      src/ST.hs:(61,1)-(71,33)   404           1    0.1    0.0    97.6   89.2
-     spellcheckWord.getSuggestions         ST                      src/ST.hs:(65,5)-(71,33)   405      123382    0.2    0.0    97.5   89.2
-      editDistance                         ST                      src/ST.hs:(29,1)-(52,32)   406      123382    0.1    1.4    97.3   89.2
-       editDistance.memoizedEditDistance   ST                      src/ST.hs:(31,5)-(38,32)   407     1235464    2.7    9.1    97.1   87.8
-        readCache                          ST                      src/ST.hs:(18,1)-(19,51)   408     1235464   64.7    7.7    64.7    7.7
-        editDistance.findDistance          ST                      src/ST.hs:(40,5)-(52,32)   409      380808    2.4   16.6     2.5   18.1
-         editDistance.findDistance.restOfA ST                      src/ST.hs:51:9-32          410      380802    0.1    1.5     0.1    1.5
-         editDistance.findDistance.restOfB ST                      src/ST.hs:52:9-32          413       15162    0.0    0.1     0.0    0.1
-        updateCache                        ST                      src/ST.hs:(22,1)-(23,60)   411      380808   27.1   52.9    27.1   52.9
-    newCache                               ST                      src/ST.hs:26:1-43          403           0    0.0    0.0     0.0    0.0
-  main.threshold                           Main                    app/Main.hs:19:9-21        412           1    0.0    0.0     0.0    0.0
+MAIN                                       MAIN                    <built-in>                  232           0    0.0    0.0   100.0  100.0
+ CAF                                       Main                    <entire-module>             463           0    0.0    0.0     0.0    0.0
+  main                                     Main                    app/Main.hs:(16,1)-(28,25)  464           1    0.0    0.0     0.0    0.0
+ CAF                                       STRef                   <entire-module>             460           0    0.0    0.0     0.0    0.0
+  newCache                                 STRef                   src/STRef.hs:26:1-43        468           1    0.0    0.0     0.0    0.0
+ CAF                                       Data.Text.Array         <entire-module>             428           0    0.0    0.0     0.0    0.0
+ CAF                                       GHC.Conc.Signal         <entire-module>             351           0    0.0    0.0     0.0    0.0
+ CAF                                       GHC.IO.Encoding         <entire-module>             332           0    0.0    0.0     0.0    0.0
+ CAF                                       GHC.IO.Encoding.Iconv   <entire-module>             330           0    0.0    0.0     0.0    0.0
+ CAF                                       GHC.IO.Exception        <entire-module>             324           0    0.0    0.0     0.0    0.0
+ CAF                                       GHC.IO.Handle.FD        <entire-module>             322           0    0.0    0.0     0.0    0.0
+ CAF                                       GHC.IO.Handle.Internals <entire-module>             321           0    0.0    0.0     0.0    0.0
+ CAF                                       GHC.IO.Handle.Text      <entire-module>             320           0    0.0    0.0     0.0    0.0
+ CAF                                       GHC.IO.FD               <entire-module>             262           0    0.0    0.0     0.0    0.0
+ main                                      Main                    app/Main.hs:(16,1)-(28,25)  465           0    0.7    1.7   100.0  100.0
+  main.result                              Main                    app/Main.hs:(21,9)-(26,54)  466           1    0.0    0.0    99.3   98.3
+   spellcheck                              STRef                   src/STRef.hs:(68,1)-(70,73) 467           1    0.0    0.0    99.3   98.3
+    spellcheckWord                         STRef                   src/STRef.hs:(55,1)-(65,33) 470           1    0.0    0.0    99.3   98.3
+     spellcheckWord.getSuggestions         STRef                   src/STRef.hs:(59,5)-(65,33) 471      123382    0.1    0.0    99.3   98.3
+      editDistance                         STRef                   src/STRef.hs:(29,1)-(52,32) 472      123382    0.0    0.4    99.2   98.3
+       editDistance.memoizedEditDistance   STRef                   src/STRef.hs:(31,5)-(38,32) 473     6239665    3.2    6.2    99.1   98.0
+        readCache                          STRef                   src/STRef.hs:(18,1)-(19,51) 474     6239665   53.6    5.9    53.6    5.9
+        editDistance.findDistance          STRef                   src/STRef.hs:(40,5)-(52,32) 475     2460261    4.6   18.9     5.4   21.5
+         editDistance.findDistance.restOfA STRef                   src/STRef.hs:51:9-32        476     2111535    0.3    1.3     0.3    1.3
+         editDistance.findDistance.restOfB STRef                   src/STRef.hs:52:9-32        478     2111535    0.5    1.3     0.5    1.3
+        updateCache                        STRef                   src/STRef.hs:(22,1)-(23,60) 477     2460261   37.0   64.3    37.0   64.3
+    newCache                               STRef                   src/STRef.hs:26:1-43        469           0    0.0    0.0     0.0    0.0
+  main.threshold                           Main                    app/Main.hs:20:9-21         479           1    0.0    0.0     0.0    0.0
