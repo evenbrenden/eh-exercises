@@ -8,12 +8,12 @@ import qualified Data.Text                     as T
 import qualified ListMemo
 import qualified Micro
 import qualified Naive
+import qualified Correct
 import qualified STRef
 import qualified STVec
 import qualified System.Environment            as Env
 import           Types
 
--- Handling Correctly Spelled Words PASS
 -- Remembering Common Typos PASS
 -- Spellchecking In HCat PASS
 
@@ -29,6 +29,7 @@ main = do
             | algo == "stref"    = STRef.spellcheck dict threshold check
             | algo == "stvec"    = STVec.spellcheck dict threshold check
             | algo == "micro"    = Micro.spellcheck dict threshold check
+            | algo == "correct"    = Correct.spellcheck dict threshold check
             | otherwise          = fail "unknown algo"
     when (verbosity == "verbose") $ print (showSuggestedMatch <$> result)
     print $ length result

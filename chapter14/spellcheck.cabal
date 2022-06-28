@@ -5,7 +5,8 @@ version:        0.1.0.0
 library
   hs-source-dirs: src
   exposed-modules:
-      ListMemo
+      Correct
+    , ListMemo
     , Naive
     , Micro
     , STRef
@@ -14,6 +15,7 @@ library
   build-depends:
       base
     , containers
+    , hashable
     , text
     , vector
   default-language: Haskell2010

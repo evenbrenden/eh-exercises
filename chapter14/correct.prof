@@ -1,0 +1,44 @@
+	Tue Jun 28 19:16 2022 Time and Allocation Profiling Report  (Final)
+
+	   spellcheck +RTS -s -p -RTS words.txt big-test-list.txt quiet correct
+
+	total time  =        9.83 secs   (9830 ticks @ 1000 us, 1 processor)
+	total alloc = 12,329,021,944 bytes  (excludes profiling overheads)
+
+COST CENTRE                            MODULE  SRC                            %time %alloc
+
+spellcheckWord.getSuggestions.distance Correct src/Correct.hs:72:9-47          92.3   99.0
+spellcheck.correct                     Correct src/Correct.hs:78:9-56           4.4    0.0
+spellcheckWord.getSuggestions          Correct src/Correct.hs:(67,5)-(73,58)    2.8    0.1
+
+
+                                                                                                                                       individual      inherited
+COST CENTRE                                  MODULE                  SRC                                            no.     entries  %time %alloc   %time %alloc
+
+MAIN                                         MAIN                    <built-in>                                     239           0    0.0    0.0   100.0  100.0
+ CAF                                         Main                    <entire-module>                                477           0    0.0    0.0     0.0    0.0
+  main                                       Main                    app/Main.hs:(21,1)-(35,25)                     478           1    0.0    0.0     0.0    0.0
+ CAF                                         Data.Primitive.MachDeps <entire-module>                                459           0    0.0    0.0     0.0    0.0
+  sIZEOF_INT                                 Data.Primitive.MachDeps Data/Primitive/MachDeps.hs:71:1-14             492           1    0.0    0.0     0.0    0.0
+ CAF                                         GHC.Conc.Signal         <entire-module>                                359           0    0.0    0.0     0.0    0.0
+ CAF                                         GHC.IO.Encoding         <entire-module>                                340           0    0.0    0.0     0.0    0.0
+ CAF                                         GHC.IO.Encoding.Iconv   <entire-module>                                338           0    0.0    0.0     0.0    0.0
+ CAF                                         GHC.IO.Exception        <entire-module>                                332           0    0.0    0.0     0.0    0.0
+ CAF                                         GHC.IO.Handle.FD        <entire-module>                                330           0    0.0    0.0     0.0    0.0
+ CAF                                         GHC.IO.Handle.Internals <entire-module>                                329           0    0.0    0.0     0.0    0.0
+ CAF                                         GHC.IO.Handle.Text      <entire-module>                                328           0    0.0    0.0     0.0    0.0
+ CAF                                         GHC.IO.FD               <entire-module>                                269           0    0.0    0.0     0.0    0.0
+ main                                        Main                    app/Main.hs:(21,1)-(35,25)                     479           0    0.3    0.7   100.0  100.0
+  main.result                                Main                    app/Main.hs:(26,9)-(33,54)                     480           1    0.0    0.0    99.7   99.3
+   spellcheck                                Correct                 src/Correct.hs:(76,1)-(79,63)                  481           1    0.0    0.1    99.7   99.3
+    spellcheckWord                           Correct                 src/Correct.hs:(63,1)-(73,58)                  482         300    0.0    0.0    99.6   99.1
+     spellcheckWord.getSuggestions           Correct                 src/Correct.hs:(67,5)-(73,58)                  489    24676600    2.8    0.1    95.1   99.1
+      spellcheckWord.getSuggestions.distance Correct                 src/Correct.hs:72:9-47                         490    24676400   92.3   99.0    92.3   99.0
+       sizeOf                                Data.Primitive.Types    Data/Primitive/Types.hs:120:1-25               491    49352800    0.0    0.0     0.0    0.0
+     spellcheck.correct                      Correct                 src/Correct.hs:78:9-56                         483         300    4.4    0.0     4.4    0.0
+      hashByteArrayWithSalt                  Data.Hashable.LowLevel  src/Data/Hashable/LowLevel.hs:(109,1)-(111,20) 486         300    0.0    0.0     0.0    0.0
+      hashInt                                Data.Hashable.LowLevel  src/Data/Hashable/LowLevel.hs:65:1-41          485         300    0.0    0.0     0.0    0.0
+    spellcheck.hashed                        Correct                 src/Correct.hs:77:9-44                         484           1    0.1    0.1     0.1    0.2
+     hashByteArrayWithSalt                   Data.Hashable.LowLevel  src/Data/Hashable/LowLevel.hs:(109,1)-(111,20) 488      123382    0.0    0.0     0.0    0.0
+     hashInt                                 Data.Hashable.LowLevel  src/Data/Hashable/LowLevel.hs:65:1-41          487      123382    0.0    0.0     0.0    0.0
+  main.threshold                             Main                    app/Main.hs:25:9-21                            493           1    0.0    0.0     0.0    0.0
