@@ -9,6 +9,7 @@ library
     , ListMemo
     , Naive
     , Micro
+    , Remember
     , STRef
     , STVec
     , Types
