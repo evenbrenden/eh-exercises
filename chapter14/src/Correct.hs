@@ -64,6 +64,7 @@ spellcheckWord dictionary threshold word = getSuggestions dictionary []
   where
     getSuggestions [] suggestions = suggestions
     getSuggestions (dictWord : dict) suggestions
+        | distance == 0        = []
         | distance > threshold = getSuggestions dict suggestions
         | otherwise            = getSuggestions dict (suggestion : suggestions)
       where
