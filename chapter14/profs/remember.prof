@@ -1,17 +1,17 @@
-	Wed Jun 29 15:39 2022 Time and Allocation Profiling Report  (Final)
+	Wed Jun 29 15:48 2022 Time and Allocation Profiling Report  (Final)
 
-	   spellcheck +RTS -s -p -RTS words.txt helllos.txt quiet remember
+	   spellcheck +RTS -s -p -RTS ./words/words.txt ./words/helllos.txt quiet remember
 
-	total time  =        0.27 secs   (265 ticks @ 1000 us, 1 processor)
-	total alloc = 178,262,024 bytes  (excludes profiling overheads)
+	total time  =        0.27 secs   (273 ticks @ 1000 us, 1 processor)
+	total alloc = 178,263,080 bytes  (excludes profiling overheads)
 
 COST CENTRE                            MODULE                 SRC                                             %time %alloc
 
-spellcheck                             Remember               src/Remember.hs:(96,1)-(117,35)                  67.5    0.0
-spellcheckWord.getSuggestions.distance Remember               src/Remember.hs:76:9-47                          18.9   39.6
-main                                   Main                   app/Main.hs:(21,1)-(36,25)                       10.9   49.9
-hashByteArrayWithSalt                  Data.Hashable.LowLevel src/Data/Hashable/LowLevel.hs:(109,1)-(111,20)    1.1    1.1
-spellcheck.hashedDictionary            Remember               src/Remember.hs:98:9-54                           0.8    9.4
+spellcheck                             Remember               src/Remember.hs:(96,1)-(117,35)                  66.3    0.0
+spellcheckWord.getSuggestions.distance Remember               src/Remember.hs:76:9-47                          19.8   39.6
+main                                   Main                   app/Main.hs:(21,1)-(36,25)                       11.0   49.9
+spellcheck.hashedDictionary            Remember               src/Remember.hs:98:9-54                           1.8    9.4
+hashByteArrayWithSalt                  Data.Hashable.LowLevel src/Data/Hashable/LowLevel.hs:(109,1)-(111,20)    0.7    1.1
 
 
                                                                                                                                          individual      inherited
@@ -33,18 +33,18 @@ MAIN                                           MAIN                    <built-in
  CAF                                           GHC.IO.Handle.Internals <entire-module>                                330           0    0.0    0.0     0.0    0.0
  CAF                                           GHC.IO.Handle.Text      <entire-module>                                329           0    0.0    0.0     0.0    0.0
  CAF                                           GHC.IO.FD               <entire-module>                                270           0    0.0    0.0     0.0    0.0
- main                                          Main                    app/Main.hs:(21,1)-(36,25)                     481           0   10.9   49.9   100.0  100.0
-  main.result                                  Main                    app/Main.hs:(26,9)-(34,54)                     482           1    0.0    0.0    89.1   50.1
-   spellcheck                                  Remember                src/Remember.hs:(96,1)-(117,35)                483           1   67.5    0.0    89.1   50.1
+ main                                          Main                    app/Main.hs:(21,1)-(36,25)                     481           0   11.0   49.9   100.0  100.0
+  main.result                                  Main                    app/Main.hs:(26,9)-(34,54)                     482           1    0.0    0.0    89.0   50.1
+   spellcheck                                  Remember                src/Remember.hs:(96,1)-(117,35)                483           1   66.3    0.0    89.0   50.1
     hashByteArrayWithSalt                      Data.Hashable.LowLevel  src/Data/Hashable/LowLevel.hs:(109,1)-(111,20) 488         100    0.0    0.0     0.0    0.0
     hashInt                                    Data.Hashable.LowLevel  src/Data/Hashable/LowLevel.hs:65:1-41          487         100    0.0    0.0     0.0    0.0
     readCorrections                            Remember                src/Remember.hs:85:1-74                        491         100    0.0    0.0     0.0    0.0
-    spellcheck.hashedDictionary                Remember                src/Remember.hs:98:9-54                        486           1    0.8    9.4     1.9   10.5
-     hashByteArrayWithSalt                     Data.Hashable.LowLevel  src/Data/Hashable/LowLevel.hs:(109,1)-(111,20) 490      123382    1.1    1.1     1.1    1.1
+    spellcheck.hashedDictionary                Remember                src/Remember.hs:98:9-54                        486           1    1.8    9.4     2.6   10.5
+     hashByteArrayWithSalt                     Data.Hashable.LowLevel  src/Data/Hashable/LowLevel.hs:(109,1)-(111,20) 490      123382    0.7    1.1     0.7    1.1
      hashInt                                   Data.Hashable.LowLevel  src/Data/Hashable/LowLevel.hs:65:1-41          489      123382    0.0    0.0     0.0    0.0
-    spellcheckWord                             Remember                src/Remember.hs:(69,1)-(77,58)                 495           1    0.0    0.0    19.6   39.6
-     spellcheckWord.getSuggestions             Remember                src/Remember.hs:(71,5)-(77,58)                 496      123383    0.8    0.0    19.6   39.6
-      spellcheckWord.getSuggestions.distance   Remember                src/Remember.hs:76:9-47                        497      123382   18.9   39.6    18.9   39.6
+    spellcheckWord                             Remember                src/Remember.hs:(69,1)-(77,58)                 495           1    0.0    0.0    20.1   39.6
+     spellcheckWord.getSuggestions             Remember                src/Remember.hs:(71,5)-(77,58)                 496      123383    0.4    0.0    20.1   39.6
+      spellcheckWord.getSuggestions.distance   Remember                src/Remember.hs:76:9-47                        497      123382   19.8   39.6    19.8   39.6
        sizeOf                                  Data.Primitive.Types    Data/Primitive/Types.hs:120:1-25               498      246764    0.0    0.0     0.0    0.0
       spellcheckWord.getSuggestions.suggestion Remember                src/Remember.hs:77:9-58                        501         173    0.0    0.0     0.0    0.0
     updateCorrections                          Remember                src/Remember.hs:(88,1)-(89,48)                 492           1    0.0    0.0     0.0    0.0

@@ -59,10 +59,8 @@ editDistance stringA stringB = runST $ do
     columnCost 1 0
     MVec.read cache (lookupIndex aLen bLen)
 
-spellcheckWord :: (Text -> Bool) -> [Text] -> Int -> Text -> [SuggestedMatch]
-spellcheckWord correct dictionary threshold word = if correct word
-    then []
-    else getSuggestions dictionary []
+spellcheckWord :: [Text] -> Int -> Text -> [SuggestedMatch]
+spellcheckWord dictionary threshold word = getSuggestions dictionary []
   where
     getSuggestions [] suggestions = suggestions
     getSuggestions (dictWord : dict) suggestions
@@ -74,6 +72,11 @@ spellcheckWord correct dictionary threshold word = if correct word
 
 spellcheck :: [Text] -> Int -> [Text] -> [SuggestedMatch]
 spellcheck dictionary threshold =
-    let hashed = (,) <*> hash <$> dictionary
+    let
+        hashed = (,) <*> hash <$> dictionary
         correct word = any ((hash word ==) . snd) hashed
-    in  concatMap (spellcheckWord correct dictionary threshold)
+        checkWord word = if correct word
+            then []
+            else spellcheckWord dictionary threshold word
+    in
+        concatMap checkWord

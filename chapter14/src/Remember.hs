@@ -98,8 +98,8 @@ spellcheck dictionary threshold words =
         hashedDictionary = (,) <*> hash <$> dictionary
         {-# INLINE correct #-}
         correct word = any ((hash word ==) . snd) hashedDictionary
-        {-# INLINE memoizedSpellcheckWord #-}
-        memoizedSpellcheckWord corrections word = if correct word
+        {-# INLINE checkWord #-}
+        checkWord corrections word = if correct word
             then return []
             else do
                 maybeCorrection <- readCorrections corrections word
@@ -113,5 +113,5 @@ spellcheck dictionary threshold words =
     in
         runST $ do
             corrections <- newCorrections
-            checked     <- traverse (memoizedSpellcheckWord corrections) words
+            checked     <- traverse (checkWord corrections) words
             return $ concat checked
