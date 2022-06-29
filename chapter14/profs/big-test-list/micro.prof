@@ -1,0 +1,37 @@
+	Wed Jun 29 22:04 2022 Time and Allocation Profiling Report  (Final)
+
+	   spellcheck +RTS -s -p -RTS ./words/words.txt ./words/big-test-list.txt quiet micro
+
+	total time  =       11.93 secs   (11930 ticks @ 1000 us, 1 processor)
+	total alloc = 16,281,305,968 bytes  (excludes profiling overheads)
+
+COST CENTRE                            MODULE SRC                          %time %alloc
+
+spellcheckWord.getSuggestions.distance Micro  src/Micro.hs:68:9-47          96.5   99.4
+spellcheckWord.getSuggestions          Micro  src/Micro.hs:(62,5)-(69,58)    3.2    0.0
+
+
+                                                                                                                           individual      inherited
+COST CENTRE                                  MODULE                  SRC                                no.     entries  %time %alloc   %time %alloc
+
+MAIN                                         MAIN                    <built-in>                         240           0    0.0    0.0   100.0  100.0
+ CAF                                         Main                    <entire-module>                    479           0    0.0    0.0     0.0    0.0
+  main                                       Main                    app/Main.hs:(21,1)-(36,25)         480           1    0.0    0.0     0.0    0.0
+ CAF                                         Data.Primitive.MachDeps <entire-module>                    460           0    0.0    0.0     0.0    0.0
+  sIZEOF_INT                                 Data.Primitive.MachDeps Data/Primitive/MachDeps.hs:71:1-14 488           1    0.0    0.0     0.0    0.0
+ CAF                                         GHC.Conc.Signal         <entire-module>                    360           0    0.0    0.0     0.0    0.0
+ CAF                                         GHC.IO.Encoding         <entire-module>                    341           0    0.0    0.0     0.0    0.0
+ CAF                                         GHC.IO.Encoding.Iconv   <entire-module>                    339           0    0.0    0.0     0.0    0.0
+ CAF                                         GHC.IO.Exception        <entire-module>                    333           0    0.0    0.0     0.0    0.0
+ CAF                                         GHC.IO.Handle.FD        <entire-module>                    331           0    0.0    0.0     0.0    0.0
+ CAF                                         GHC.IO.Handle.Internals <entire-module>                    330           0    0.0    0.0     0.0    0.0
+ CAF                                         GHC.IO.Handle.Text      <entire-module>                    329           0    0.0    0.0     0.0    0.0
+ CAF                                         GHC.IO.FD               <entire-module>                    270           0    0.0    0.0     0.0    0.0
+ main                                        Main                    app/Main.hs:(21,1)-(36,25)         481           0    0.3    0.5   100.0  100.0
+  main.result                                Main                    app/Main.hs:(26,9)-(34,54)         482           1    0.0    0.0    99.7   99.5
+   spellcheck                                Micro                   src/Micro.hs:(72,1)-(73,51)        483           1    0.0    0.0    99.7   99.5
+    spellcheckWord                           Micro                   src/Micro.hs:(60,1)-(69,58)        484         300    0.0    0.0    99.7   99.4
+     spellcheckWord.getSuggestions           Micro                   src/Micro.hs:(62,5)-(69,58)        485    32717300    3.2    0.0    99.7   99.4
+      spellcheckWord.getSuggestions.distance Micro                   src/Micro.hs:68:9-47               486    32717200   96.5   99.4    96.5   99.4
+       sizeOf                                Data.Primitive.Types    Data/Primitive/Types.hs:120:1-25   487    65434400    0.0    0.0     0.0    0.0
+  main.threshold                             Main                    app/Main.hs:25:9-21                489           1    0.0    0.0     0.0    0.0
