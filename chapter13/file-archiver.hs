@@ -244,9 +244,8 @@ instance Alternative FilePackParser where
     empty = parseError "Empty parser"
     parserA <|> parserB = FilePackParser $ do
         parseA <- runParser parserA
-        case parseA of
-            Right val -> pure $ Right val
-            Left  _   -> runParser parserB
+        parseB <- runParser parserB
+        pure $ parseA <|> parseB
     some = parseSome
     many = parseMany
 
