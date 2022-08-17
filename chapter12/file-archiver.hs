@@ -8,7 +8,6 @@ module FileArchiver where
 
 import           Control.Applicative
 import           Control.Monad
-import           Control.Monad.Fail
 import           Data.Bits                      ( (.&.)
                                                 , (.|.)
                                                 , shift
@@ -17,7 +16,6 @@ import qualified Data.ByteString               as BS
 import           Data.ByteString.Char8          ( pack
                                                 , unpack
                                                 )
-import qualified Data.ByteString.Char8         as ByteStringChar8
 import qualified Data.Text                     as Text
 import           Data.Text.Encoding             ( decodeUtf8
                                                 , encodeUtf8
@@ -121,7 +119,7 @@ instance Encode a => Encode (FileData a) where
         in
             encode encodedData
 
-instance (Encode a, Encode b) => Encode (a,b) where
+instance (Encode a, Encode b) => Encode (a, b) where
     encode (a, b) = encode $ encodeWithSize a <> encodeWithSize b
 
 instance {-# OVERLAPPABLE #-} Encode a => Encode [a] where
@@ -162,7 +160,7 @@ extractValue = FilePackParser $ \input -> do
     segmentSize <- fromIntegral <$> bytestringToWord32 rawSegmentSize
     when (BS.length rest < segmentSize)
         $  Left
-        $  "not enough input to parse the next value"
+        $  "Not enough input to parse the next value"
         <> show input
     let (rawSegmentValue, rest') = BS.splitAt segmentSize rest
     case decode rawSegmentValue of
@@ -172,7 +170,7 @@ extractValue = FilePackParser $ \input -> do
 execParser :: FilePackParser a -> BS.ByteString -> Either String a
 execParser parser inputString = fst <$> runParser parser inputString
 
-instance (Decode a, Decode b) => Decode (a,b) where
+instance (Decode a, Decode b) => Decode (a, b) where
     decode = execParser $ (,) <$> extractValue <*> extractValue
 
 instance Decode a => Decode (FileData a) where
@@ -217,10 +215,10 @@ test = do
         [2, 4 .. 10]
 
 instance Alternative FilePackParser where
-    empty = FilePackParser $ const (Left "empty parser")
+    empty = FilePackParser $ const (Left "Empty parser")
     parserA <|> parserB = FilePackParser $ \s -> case runParser parserA s of
-        Right val  -> Right val
-        Left  errA -> runParser parserB s
+        Right val -> Right val
+        Left  _   -> runParser parserB s
     some = parseSome
     many = parseMany
 
@@ -245,6 +243,7 @@ testDecodeValue =
     execParser $ (,,) <$> extractValue <*> extractValue <*> extractValue
 
 -- From the last chapter
+testEncodeValue :: BS.ByteString
 testEncodeValue =
     "\FS\NUL\NUL\NUL\SOH\NUL\NUL\NULa\EOT\NUL\NUL\NUL\ETX\NUL\NUL\NUL\EOT\NUL\NUL\NUL\243\STX\NUL\NUL\ETX\NUL\NUL\NULfoo+\NUL\NUL\NUL\SOH\NUL\NUL\NULb\EOT\NUL\NUL\NUL\n\NUL\NUL\NUL\EOT\NUL\NUL\NUL\132\STX\NUL\NUL\DC2\NUL\NUL\NUL\ENQ\NUL\NUL\NULhello\ENQ\NUL\NUL\NULworld)\NUL\NUL\NUL\SOH\NUL\NUL\NULc\EOT\NUL\NUL\NUL\b\NUL\NUL\NUL\EOT\NUL\NUL\NUL\132\STX\NUL\NUL\DLE\NUL\NUL\NUL\EOT\NUL\NUL\NUL\NUL\NUL\NUL\NUL\EOT\NUL\NUL\NULzero"
 
@@ -292,7 +291,7 @@ instance Decode FilePackImage where
                     <*> extractValue
                     <*> many extractValue
             otherTag -> FilePackParser
-                $ \_ -> Left $ "unknown image type tag: " <> otherTag
+                $ \_ -> Left $ "Unknown image type tag: " <> otherTag
 
 parsePBM, parsePGM :: FilePackParser FilePackImage
 parsePBM = FilePackPBM <$> extractValue <*> extractValue <*> many extractValue
@@ -308,7 +307,7 @@ getNetpbmParser tag = case tag of
     "pbm" -> parsePBM
     "pgm" -> parsePGM
     otherTag ->
-        FilePackParser $ \_ -> Left $ "unknown image type tag: " <> otherTag
+        FilePackParser $ \_ -> Left $ "Unknown image type tag: " <> otherTag
 
 getNetpbmTag :: FilePackParser String
 getNetpbmTag = extractValue
@@ -325,4 +324,5 @@ parseError errMsg = FilePackParser (const $ Left errMsg)
 instance MonadFail FilePackParser where
     fail errMsg = FilePackParser (const $ Left errMsg)
 
+main :: IO ()
 main = print $ testDecodeValue testEncodeValue
