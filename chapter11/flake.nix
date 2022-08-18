@@ -1,5 +1,5 @@
 {
-  description = "EH chapter 13 shell";
+  description = "EH chapter 11 shell";
   inputs.nixpkgs.url = "github:nixos/nixpkgs/nixpkgs-unstable";
   outputs = { self, nixpkgs }:
     let
@@ -8,7 +8,7 @@
       hsPkgs = pkgs.haskell.packages.${"ghc" + ghcVersion}.ghcWithPackages (p:
         with p; [
           # Libraries
-          base64-bytestring
+          p.base64-bytestring
           # Tools
           brittany
           haskell-language-server
