@@ -1,38 +1,27 @@
-# E.g. nix run .#spellcheck:exe:spellcheck -- words/words.txt words/helllo.txt quiet stvec
+# Not using haskell.nix because I don't know how to set it up with profiling
 {
-  description = "spellcheck";
-  inputs.haskellNix.url = "github:input-output-hk/haskell.nix";
-  inputs.nixpkgs.follows = "haskellNix/nixpkgs-unstable";
-  inputs.flake-utils.url = "github:numtide/flake-utils";
-  outputs = { self, nixpkgs, flake-utils, haskellNix }:
-    flake-utils.lib.eachSystem [ "x86_64-linux" ] (system:
-      let
-        index-state = "2022-08-18T00:00:00Z";
-        overlays = [
-          haskellNix.overlay
-          (final: prev: {
-            spellcheckProject = final.haskell-nix.project' {
-              src = ./.;
-              compiler-nix-name = "ghc902";
-              shell = {
-                tools = { cabal = { inherit index-state; }; };
-                # https://github.com/input-output-hk/haskell.nix/issues/1587
-                # buildInputs = with pkgs.haskellPackages; [
-                #   brittany
-                #   haskell-language-server
-                #   implicit-hie
-                # ];
-              };
-              inherit index-state;
-            };
-          })
-        ];
-        pkgs = import nixpkgs {
-          inherit system overlays;
-          inherit (haskellNix) config;
-        };
-        flake = pkgs.spellcheckProject.flake { };
-      in flake // {
-        defaultPackage = flake.packages."spellcheck:exe:spellcheck";
-      });
+  description = "EH chapter 14 shell";
+  inputs.nixpkgs.url = "github:nixos/nixpkgs/nixpkgs-unstable";
+  outputs = { self, nixpkgs }:
+    let
+      ghcVersion = "902";
+      system = "x86_64-linux";
+      hsPkgs = pkgs.haskell.packages.${"ghc" + ghcVersion}.ghcWithPackages (p:
+        with p; [
+          # Libraries
+          base
+          containers
+          hashable
+          text
+          vector
+          # Tools
+          cabal-install
+          brittany
+          haskell-language-server
+          implicit-hie
+        ]);
+      pkgs = nixpkgs.legacyPackages.${system};
+    in {
+      devShells.${system}.default = pkgs.mkShell { buildInputs = [ hsPkgs ]; };
+    };
 }
