@@ -1,6 +1,9 @@
 -- A New FilePackParser
+
+{-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE TypeApplications #-}
@@ -9,8 +12,9 @@ module FilePackParser where
 
 import Control.Applicative
 import Control.Monad
-import Control.Monad.State (State)
-import qualified Control.Monad.State as State
+import Control.Monad.Except (ExceptT, MonadError, liftEither, runExceptT, throwError)
+import Control.Monad.IO.Class (MonadIO)
+import Control.Monad.State (MonadState, State, StateT, evalStateT, get, gets, put)
 import Data.Bits (
     shift,
     (.&.),
@@ -48,32 +52,32 @@ class Encode a where
     {-# MINIMAL encode | encodeWithSize #-}
 
 class Decode a where
-    decode :: BS.ByteString -> Either String a
+    decode :: FilePackParser a
 
 instance Encode BS.ByteString where
     encode = id
 
 instance Decode BS.ByteString where
-    decode = Right
+    decode = get
 
 instance Encode Text.Text where
     encode = encodeUtf8
 
 instance Decode Text.Text where
-    decode = Right . decodeUtf8
+    decode = gets decodeUtf8
 
 instance Encode String where
     encode = pack
 
 instance Decode String where
-    decode = Right . unpack
+    decode = gets unpack
 
 instance Encode FileMode where
     encode (CMode fMode) = encode fMode
     encodeWithSize (CMode fMode) = encodeWithSize fMode
 
 instance Decode FileMode where
-    decode = fmap CMode . decode
+    decode = CMode <$> decode
 
 word32ToBytes :: Word32 -> (Word8, Word8, Word8, Word8)
 word32ToBytes word =
@@ -108,7 +112,11 @@ instance Encode Word32 where
         let (a, b, c, d) = word32ToBytes w in BS.pack [4, 0, 0, 0, a, b, c, d]
 
 instance Decode Word32 where
-    decode = bytestringToWord32
+    decode = do
+        x <- get
+        case bytestringToWord32 x of
+            Left err -> throwError err
+            Right val -> pure val
 
 instance Encode a => Encode (FileData a) where
     encode FileData {..} =
@@ -143,85 +151,63 @@ newtype FilePack = FilePack [Packable]
 instance Encode FilePack where
     encode (FilePack p) = encode p
 
+-- PASS on turning ByteString and String into Text
 newtype FilePackParser a = FilePackParser
-    {runParser :: State BS.ByteString (Either String a)}
+    {runParser :: StateT BS.ByteString (ExceptT String IO) a}
+    deriving newtype (Functor, Applicative, Monad, Alternative, MonadState BS.ByteString, MonadError String, MonadIO)
 
-instance Functor FilePackParser where
-    fmap f parser = FilePackParser $ (fmap . fmap) f (runParser parser)
-
-instance Applicative FilePackParser where
-    pure a = FilePackParser $ (pure . pure) a
-    f <*> a = FilePackParser $ do
-        eitherFunc <- runParser f
-        eitherVal <- runParser a
-        pure $ eitherFunc <*> eitherVal
-
-instance Monad FilePackParser where
-    return = pure
-    a >>= f = FilePackParser $ do
-        val <- runParser a
-        case val of
-            Left err -> pure (Left err)
-            Right val' -> runParser (f val')
-
-parseError :: String -> FilePackParser a
-parseError errMsg = FilePackParser $ pure (Left errMsg)
-
-liftState :: State BS.ByteString a -> FilePackParser a
-liftState state = FilePackParser $ pure <$> state
-
-liftEither :: Either String a -> FilePackParser a
-liftEither e = case e of
-    Left err -> parseError err
-    Right val -> pure val
-
-get :: FilePackParser BS.ByteString
-get = liftState State.get
-
-put :: BS.ByteString -> FilePackParser ()
-put s = liftState $ State.put s
+runSubparser :: FilePackParser a -> BS.ByteString -> FilePackParser a
+runSubparser action subparserState = do
+    oldString <- get
+    put subparserState
+    result <- action
+    put oldString
+    pure result
 
 extractValue :: Decode a => FilePackParser a
 extractValue = do
-    input <- get
-    when (BS.length input < 4) $
-        parseError
-            "Input has less than 4 bytes, we can't get a segment size"
-    let (rawSegmentSize, rest) = BS.splitAt 4 input
-    segmentSize <-
-        liftEither $ fromIntegral <$> bytestringToWord32 rawSegmentSize
-    when (BS.length rest < segmentSize) $
-        parseError $
-            "Not enough input to parse the next value"
-                <> show input
-    let (rawSegmentValue, rest') = BS.splitAt segmentSize rest
-    put rest'
-    liftEither $ decode rawSegmentValue
+    rawSegmentValue <- do
+        input <- get
+        when (BS.length input < 4) $
+            throwError
+                "Input has less than 4 bytes, we can't get a segment size"
+        let (rawSegmentSize, rest) = BS.splitAt 4 input
+        segmentSize <-
+            liftEither $ fromIntegral <$> bytestringToWord32 rawSegmentSize
+        when (BS.length rest < segmentSize) $
+            throwError $
+                "Not enough input to parse the next value"
+                    <> show input
+        let (rawSegmentValue, rest') = BS.splitAt segmentSize rest
+        put rest'
+        pure rawSegmentValue
+    runSubparser decode rawSegmentValue
 
-execParser :: FilePackParser a -> BS.ByteString -> Either String a
-execParser parser = State.evalState $ runParser parser
+execParser :: FilePackParser a -> BS.ByteString -> IO (Either String a)
+execParser parser x = runExceptT $ evalStateT (runParser parser) x
 
 instance (Decode a, Decode b) => Decode (a, b) where
-    decode = execParser $ (,) <$> extractValue <*> extractValue
+    decode = (,) <$> extractValue <*> extractValue
 
 instance Decode a => Decode (FileData a) where
     decode =
-        execParser $
-            FileData
-                <$> extractValue
-                <*> extractValue
-                <*> extractValue
-                <*> extractValue
+        FileData
+            <$> extractValue
+            <*> extractValue
+            <*> extractValue
+            <*> extractValue
 
 testRoundTrip :: (Encode a, Decode a, Show a, Eq a) => a -> IO ()
-testRoundTrip val = case decode (encode val) of
-    Left err -> putStrLn $ "Failed to round-trip value: " <> err
-    Right roundTripVal
-        | roundTripVal == val -> putStrLn "It works!"
-        | otherwise -> do
-            putStrLn "Round-trip failed!"
-            putStrLn $ "expected: " <> show val
-            putStrLn $ "got: " <> show roundTripVal
+testRoundTrip val = do
+    decoded <- execParser decode (encode val)
+    case decoded of
+        Left err -> putStrLn $ "Failed to round-trip value: " <> err
+        Right roundTripVal
+            | roundTripVal == val -> putStrLn "It works!"
+            | otherwise -> do
+                putStrLn "Round-trip failed!"
+                putStrLn $ "expected: " <> show val
+                putStrLn $ "got: " <> show roundTripVal
 
 runRoundTripTest :: IO ()
 runRoundTripTest =
@@ -236,27 +222,22 @@ runRoundTripTest =
 parseEven :: FilePackParser Word32
 parseEven = do
     val <- extractValue
-    if even val then pure val else parseError "Cannot extract a non-even value"
+    if even val then pure val else throwError "Cannot extract a non-even value"
 
 test :: IO ()
 test = do
-    print $
-        execParser (parseMany @Word32 parseEven) $
-            encode @[Word32]
-                [1 .. 10] -- Data.ByteString is strict so no [1 ..]
-    print $
-        execParser (parseSome @Word32 parseEven) $
-            encode @[Word32]
-                [2, 4 .. 10]
-
-instance Alternative FilePackParser where
-    empty = parseError "Empty parser"
-    parserA <|> parserB = FilePackParser $ do
-        parseA <- runParser parserA
-        parseB <- runParser parserB
-        pure $ parseA <|> parseB
-    some = parseSome
-    many = parseMany
+    execParser
+        (parseMany @Word32 parseEven)
+        ( encode @[Word32]
+            [1 .. 10] -- Data.ByteString is strict so no [1 ..]
+        )
+        >>= print
+    execParser
+        (parseSome @Word32 parseEven)
+        ( encode @[Word32]
+            [2, 4 .. 10]
+        )
+        >>= print
 
 parseSome :: FilePackParser a -> FilePackParser [a]
 parseSome p = (:) <$> p <*> parseMany p
@@ -268,13 +249,15 @@ extractOptional :: FilePackParser a -> FilePackParser (Maybe a)
 extractOptional = (<|> pure Nothing) . fmap Just
 
 instance {-# OVERLAPPABLE #-} Decode a => Decode [a] where
-    decode = execParser (many extractValue)
+    decode = many extractValue
 
 testDecodeValue ::
     BS.ByteString ->
-    Either
-        String
-        (FileData String, FileData [Text.Text], FileData (Word32, String))
+    IO
+        ( Either
+            String
+            (FileData String, FileData [Text.Text], FileData (Word32, String))
+        )
 testDecodeValue =
     execParser $ (,,) <$> extractValue <*> extractValue <*> extractValue
 
@@ -306,7 +289,7 @@ instance Encode FilePackImage where
                 <> encode values
 
 instance Decode FilePackImage where
-    decode = execParser $ do
+    decode = do
         tag <- extractValue @String
         case tag of
             "pbm" ->
@@ -320,7 +303,7 @@ instance Decode FilePackImage where
                     <*> extractValue
                     <*> extractValue
                     <*> many extractValue
-            otherTag -> parseError $ "Unknown image type tag: " <> otherTag
+            otherTag -> throwError $ "Unknown image type tag: " <> otherTag
 
 parsePBM, parsePGM :: FilePackParser FilePackImage
 parsePBM = FilePackPBM <$> extractValue <*> extractValue <*> many extractValue
@@ -335,7 +318,7 @@ getNetpbmParser :: String -> FilePackParser FilePackImage
 getNetpbmParser tag = case tag of
     "pbm" -> parsePBM
     "pgm" -> parsePGM
-    otherTag -> parseError $ "Unknown image type tag: " <> otherTag
+    otherTag -> throwError $ "Unknown image type tag: " <> otherTag
 
 getNetpbmTag :: FilePackParser String
 getNetpbmTag = extractValue
@@ -347,7 +330,7 @@ parseImage ::
 parseImage = (>>=)
 
 instance MonadFail FilePackParser where
-    fail = parseError
+    fail = throwError
 
 main :: IO ()
-main = print $ testDecodeValue testEncodeValue
+main = testDecodeValue testEncodeValue >>= print
