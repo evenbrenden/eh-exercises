@@ -4,30 +4,33 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE TypeApplications #-}
 
-module FileArchiver where
+module FilePackParser where
 
-import           Control.Applicative
-import           Control.Monad
-import           Data.Bits                      ( (.&.)
-                                                , (.|.)
-                                                , shift
-                                                )
-import qualified Data.ByteString               as BS
-import           Data.ByteString.Char8          ( pack
-                                                , unpack
-                                                )
-import qualified Data.Text                     as Text
-import           Data.Text.Encoding             ( decodeUtf8
-                                                , encodeUtf8
-                                                )
-import           Data.Word
-import           System.Posix.Types
+import Control.Applicative
+import Control.Monad
+import Data.Bits (
+    shift,
+    (.&.),
+    (.|.),
+ )
+import qualified Data.ByteString as BS
+import Data.ByteString.Char8 (
+    pack,
+    unpack,
+ )
+import qualified Data.Text as Text
+import Data.Text.Encoding (
+    decodeUtf8,
+    encodeUtf8,
+ )
+import Data.Word
+import System.Posix.Types
 
 data FileData a = FileData
-    { packedFileName        :: FilePath
-    , packedFileSize        :: Word32
-    , packedFilePermissions :: FileMode
-    , packedFileData        :: a
+    { packedFileName :: FilePath,
+      packedFileSize :: Word32,
+      packedFilePermissions :: FileMode,
+      packedFileData :: a
     }
     deriving (Eq, Show)
 
@@ -38,7 +41,7 @@ class Encode a where
     encodeWithSize a =
         let s = encode a
             l = fromIntegral $ BS.length s
-        in word32ToByteString l <> s
+         in word32ToByteString l <> s
     {-# MINIMAL encode | encodeWithSize #-}
 
 class Decode a where
@@ -75,7 +78,7 @@ word32ToBytes word =
         b = fromIntegral $ 255 .&. shift word (-8)
         c = fromIntegral $ 255 .&. shift word (-16)
         d = fromIntegral $ 255 .&. shift word (-24)
-    in  (a, b, c, d)
+     in (a, b, c, d)
 
 word32FromBytes :: (Word8, Word8, Word8, Word8) -> Word32
 word32FromBytes (a, b, c, d) =
@@ -83,7 +86,7 @@ word32FromBytes (a, b, c, d) =
         b' = shift (fromIntegral b) 8
         c' = shift (fromIntegral c) 16
         d' = shift (fromIntegral d) 24
-    in  a' .|. b' .|. c' .|. d'
+     in a' .|. b' .|. c' .|. d'
 
 word32ToByteString :: Word32 -> BS.ByteString
 word32ToByteString word =
@@ -94,7 +97,7 @@ bytestringToWord32 bytestring = case BS.unpack bytestring of
     [a, b, c, d] -> Right $ word32FromBytes (a, b, c, d)
     _ ->
         let l = show $ BS.length bytestring
-        in  Left ("Expecting 4 bytes but got " <> l)
+         in Left ("Expecting 4 bytes but got " <> l)
 
 instance Encode Word32 where
     encode = word32ToByteString
@@ -106,18 +109,16 @@ instance Decode Word32 where
 
 instance Encode a => Encode (FileData a) where
     encode FileData {..} =
-        let
-            encodedFileName        = encodeWithSize packedFileName
-            encodedFileSize        = encodeWithSize packedFileSize
+        let encodedFileName = encodeWithSize packedFileName
+            encodedFileSize = encodeWithSize packedFileSize
             encodedFilePermissions = encodeWithSize packedFilePermissions
-            encodedFileData        = encodeWithSize packedFileData
+            encodedFileData = encodeWithSize packedFileData
             encodedData =
                 encodedFileName
                     <> encodedFileSize
                     <> encodedFilePermissions
                     <> encodedFileData
-        in
-            encode encodedData
+         in encode encodedData
 
 instance (Encode a, Encode b) => Encode (a, b) where
     encode (a, b) = encode $ encodeWithSize a <> encodeWithSize b
@@ -125,7 +126,9 @@ instance (Encode a, Encode b) => Encode (a, b) where
 instance {-# OVERLAPPABLE #-} Encode a => Encode [a] where
     encode = encode . foldMap encodeWithSize
 
-data Packable = forall a . Encode a => Packable
+data Packable = forall a.
+      Encode a =>
+    Packable
     { getPackable :: FileData a
     }
 
@@ -138,7 +141,7 @@ instance Encode FilePack where
     encode (FilePack p) = encode p
 
 newtype FilePackParser a = FilePackParser
-    { runParser :: BS.ByteString -> Either String (a, BS.ByteString) }
+    {runParser :: BS.ByteString -> Either String (a, BS.ByteString)}
 
 instance Functor FilePackParser where
     fmap f parser = FilePackParser $ \input -> do
@@ -149,23 +152,23 @@ instance Applicative FilePackParser where
     pure a = FilePackParser $ \s -> pure (a, s)
     f <*> s = FilePackParser $ \input -> do
         (f', initialRemainder) <- runParser f input
-        (a , finalRemainder  ) <- runParser s initialRemainder
+        (a, finalRemainder) <- runParser s initialRemainder
         pure (f' a, finalRemainder)
 
 extractValue :: Decode a => FilePackParser a
 extractValue = FilePackParser $ \input -> do
-    when (BS.length input < 4)
-        $ Left "Input has less than 4 bytes, we can't get a segment size"
+    when (BS.length input < 4) $
+        Left "Input has less than 4 bytes, we can't get a segment size"
     let (rawSegmentSize, rest) = BS.splitAt 4 input
     segmentSize <- fromIntegral <$> bytestringToWord32 rawSegmentSize
-    when (BS.length rest < segmentSize)
-        $  Left
-        $  "Not enough input to parse the next value"
-        <> show input
+    when (BS.length rest < segmentSize) $
+        Left $
+            "Not enough input to parse the next value"
+                <> show input
     let (rawSegmentValue, rest') = BS.splitAt segmentSize rest
     case decode rawSegmentValue of
-        Left  err -> Left err
-        Right a   -> Right (a, rest')
+        Left err -> Left err
+        Right a -> Right (a, rest')
 
 execParser :: FilePackParser a -> BS.ByteString -> Either String a
 execParser parser inputString = fst <$> runParser parser inputString
@@ -175,12 +178,12 @@ instance (Decode a, Decode b) => Decode (a, b) where
 
 instance Decode a => Decode (FileData a) where
     decode =
-        execParser
-            $   FileData
-            <$> extractValue
-            <*> extractValue
-            <*> extractValue
-            <*> extractValue
+        execParser $
+            FileData
+                <$> extractValue
+                <*> extractValue
+                <*> extractValue
+                <*> extractValue
 
 testRoundTrip :: (Encode a, Decode a, Show a, Eq a) => a -> IO ()
 testRoundTrip val = case decode (encode val) of
@@ -193,12 +196,14 @@ testRoundTrip val = case decode (encode val) of
             putStrLn $ "got: " <> show roundTripVal
 
 runRoundTripTest :: IO ()
-runRoundTripTest = testRoundTrip $ FileData
-    { packedFileName        = "c"
-    , packedFileSize        = 8
-    , packedFilePermissions = 0644
-    , packedFileData        = (0, "zero") :: (Word32, String)
-    }
+runRoundTripTest =
+    testRoundTrip $
+        FileData
+            { packedFileName = "c",
+              packedFileSize = 8,
+              packedFilePermissions = 0644,
+              packedFileData = (0, "zero") :: (Word32, String)
+            }
 
 parseEven :: FilePackParser Word32
 parseEven = FilePackParser $ \input -> do
@@ -209,16 +214,20 @@ parseEven = FilePackParser $ \input -> do
 
 test :: IO ()
 test = do
-    print $ execParser (parseMany @Word32 parseEven) $ encode @[Word32]
-        [1 .. 10] -- Data.ByteString is strict so no [1 ..]
-    print $ execParser (parseSome @Word32 parseEven) $ encode @[Word32]
-        [2, 4 .. 10]
+    print $
+        execParser (parseMany @Word32 parseEven) $
+            encode @[Word32]
+                [1 .. 10] -- Data.ByteString is strict so no [1 ..]
+    print $
+        execParser (parseSome @Word32 parseEven) $
+            encode @[Word32]
+                [2, 4 .. 10]
 
 instance Alternative FilePackParser where
     empty = FilePackParser $ const (Left "Empty parser")
     parserA <|> parserB = FilePackParser $ \s -> case runParser parserA s of
         Right val -> Right val
-        Left  _   -> runParser parserB s
+        Left _ -> runParser parserB s
     some = parseSome
     many = parseMany
 
@@ -234,11 +243,11 @@ extractOptional = (<|> pure Nothing) . fmap Just
 instance {-# OVERLAPPABLE #-} Decode a => Decode [a] where
     decode = execParser (many extractValue)
 
-testDecodeValue
-    :: BS.ByteString
-    -> Either
-           String
-           (FileData String, FileData [Text.Text], FileData (Word32, String))
+testDecodeValue ::
+    BS.ByteString ->
+    Either
+        String
+        (FileData String, FileData [Text.Text], FileData (Word32, String))
 testDecodeValue =
     execParser $ (,,) <$> extractValue <*> extractValue <*> extractValue
 
@@ -260,20 +269,20 @@ data FilePackImage
 
 instance Encode FilePackImage where
     encode (FilePackPBM width height values) =
-        encode
-            $  encodeWithSize @String "pbm"
-            <> encodeWithSize width
-            <> encodeWithSize height
-            -- The Encode instance for list already includes size info
-            <> encode values
+        encode $
+            encodeWithSize @String "pbm"
+                <> encodeWithSize width
+                <> encodeWithSize height
+                -- The Encode instance for list already includes size info
+                <> encode values
     encode (FilePackPGM width height maxValue values) =
-        encode
-            $  encodeWithSize @String "pgm"
-            <> encodeWithSize width
-            <> encodeWithSize height
-            <> encodeWithSize maxValue
-            -- The Encode instance for list already includes size info
-            <> encode values
+        encode $
+            encodeWithSize @String "pgm"
+                <> encodeWithSize width
+                <> encodeWithSize height
+                <> encodeWithSize maxValue
+                -- The Encode instance for list already includes size info
+                <> encode values
 
 instance Decode FilePackImage where
     decode = execParser $ do
@@ -290,8 +299,8 @@ instance Decode FilePackImage where
                     <*> extractValue
                     <*> extractValue
                     <*> many extractValue
-            otherTag -> FilePackParser
-                $ \_ -> Left $ "Unknown image type tag: " <> otherTag
+            otherTag -> FilePackParser $
+                \_ -> Left $ "Unknown image type tag: " <> otherTag
 
 parsePBM, parsePGM :: FilePackParser FilePackImage
 parsePBM = FilePackPBM <$> extractValue <*> extractValue <*> many extractValue
@@ -312,10 +321,10 @@ getNetpbmParser tag = case tag of
 getNetpbmTag :: FilePackParser String
 getNetpbmTag = extractValue
 
-parseImage
-    :: FilePackParser String
-    -> (String -> FilePackParser FilePackImage)
-    -> FilePackParser FilePackImage
+parseImage ::
+    FilePackParser String ->
+    (String -> FilePackParser FilePackImage) ->
+    FilePackParser FilePackImage
 parseImage = (>>=)
 
 parseError :: String -> FilePackParser a
