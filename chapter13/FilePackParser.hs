@@ -6,7 +6,6 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
-{-# LANGUAGE TypeApplications #-}
 
 module FilePackParser where
 
@@ -32,14 +31,6 @@ import Data.Text.Encoding (
  )
 import Data.Word
 import System.Posix.Types
-
-data FileData a = FileData
-    { packedFileName :: FilePath,
-      packedFileSize :: Word32,
-      packedFilePermissions :: FileMode,
-      packedFileData :: a
-    }
-    deriving (Eq, Show)
 
 class Encode a where
     encode :: a -> BS.ByteString
@@ -118,6 +109,14 @@ instance Decode Word32 where
             Left err -> throwError err
             Right val -> pure val
 
+data FileData a = FileData
+    { packedFileName :: FilePath,
+      packedFileSize :: Word32,
+      packedFilePermissions :: FileMode,
+      packedFileData :: a
+    }
+    deriving (Eq, Show)
+
 instance Encode a => Encode (FileData a) where
     encode FileData {..} =
         let encodedFileName = encodeWithSize packedFileName
@@ -131,38 +130,30 @@ instance Encode a => Encode (FileData a) where
                     <> encodedFileData
          in encode encodedData
 
+instance Decode a => Decode (FileData a) where
+    decode =
+        FileData
+            <$> extractValue
+            <*> extractValue
+            <*> extractValue
+            <*> extractValue
+
 instance (Encode a, Encode b) => Encode (a, b) where
     encode (a, b) = encode $ encodeWithSize a <> encodeWithSize b
+
+instance (Decode a, Decode b) => Decode (a, b) where
+    decode = (,) <$> extractValue <*> extractValue
 
 instance {-# OVERLAPPABLE #-} Encode a => Encode [a] where
     encode = encode . foldMap encodeWithSize
 
-data Packable = forall a.
-      Encode a =>
-    Packable
-    { getPackable :: FileData a
-    }
+instance {-# OVERLAPPABLE #-} Decode a => Decode [a] where
+    decode = many extractValue
 
-instance Encode Packable where
-    encode (Packable p) = encode p
-
-newtype FilePack = FilePack [Packable]
-
-instance Encode FilePack where
-    encode (FilePack p) = encode p
-
--- PASS on turning ByteString and String into Text
+-- Not turning BS.ByteString and String into Text
 newtype FilePackParser a = FilePackParser
     {runParser :: StateT BS.ByteString (ExceptT String IO) a}
     deriving newtype (Functor, Applicative, Monad, Alternative, MonadState BS.ByteString, MonadError String, MonadIO)
-
-runSubparser :: FilePackParser a -> BS.ByteString -> FilePackParser a
-runSubparser action subparserState = do
-    oldString <- get
-    put subparserState
-    result <- action
-    put oldString
-    pure result
 
 extractValue :: Decode a => FilePackParser a
 extractValue = do
@@ -183,22 +174,19 @@ extractValue = do
         pure rawSegmentValue
     runSubparser decode rawSegmentValue
 
+runSubparser :: FilePackParser a -> BS.ByteString -> FilePackParser a
+runSubparser action subparserState = do
+    oldString <- get
+    put subparserState
+    result <- action
+    put oldString
+    pure result
+
 execParser :: FilePackParser a -> BS.ByteString -> IO (Either String a)
 execParser parser x = runExceptT $ evalStateT (runParser parser) x
 
-instance (Decode a, Decode b) => Decode (a, b) where
-    decode = (,) <$> extractValue <*> extractValue
-
-instance Decode a => Decode (FileData a) where
-    decode =
-        FileData
-            <$> extractValue
-            <*> extractValue
-            <*> extractValue
-            <*> extractValue
-
-testRoundTrip :: (Encode a, Decode a, Show a, Eq a) => a -> IO ()
-testRoundTrip val = do
+roundTripTest :: (Encode a, Decode a, Show a, Eq a) => a -> IO ()
+roundTripTest val = do
     decoded <- execParser decode (encode val)
     case decoded of
         Left err -> putStrLn $ "Failed to round-trip value: " <> err
@@ -211,7 +199,7 @@ testRoundTrip val = do
 
 runRoundTripTest :: IO ()
 runRoundTripTest =
-    testRoundTrip $
+    roundTripTest $
         FileData
             { packedFileName = "c",
               packedFileSize = 8,
@@ -219,118 +207,22 @@ runRoundTripTest =
               packedFileData = (0, "zero") :: (Word32, String)
             }
 
-parseEven :: FilePackParser Word32
-parseEven = do
-    val <- extractValue
-    if even val then pure val else throwError "Cannot extract a non-even value"
-
-test :: IO ()
-test = do
-    execParser
-        (parseMany @Word32 parseEven)
-        ( encode @[Word32]
-            [1 .. 10] -- Data.ByteString is strict so no [1 ..]
-        )
-        >>= print
-    execParser
-        (parseSome @Word32 parseEven)
-        ( encode @[Word32]
-            [2, 4 .. 10]
-        )
-        >>= print
-
-parseSome :: FilePackParser a -> FilePackParser [a]
-parseSome p = (:) <$> p <*> parseMany p
-
-parseMany :: FilePackParser a -> FilePackParser [a]
-parseMany p = parseSome p <|> pure []
-
-extractOptional :: FilePackParser a -> FilePackParser (Maybe a)
-extractOptional = (<|> pure Nothing) . fmap Just
-
-instance {-# OVERLAPPABLE #-} Decode a => Decode [a] where
-    decode = many extractValue
-
-testDecodeValue ::
-    BS.ByteString ->
+decodeTest ::
     IO
         ( Either
             String
             (FileData String, FileData [Text.Text], FileData (Word32, String))
         )
-testDecodeValue =
-    execParser $ (,,) <$> extractValue <*> extractValue <*> extractValue
+decodeTest =
+    -- From chapter 11
+    let bs = "\FS\NUL\NUL\NUL\SOH\NUL\NUL\NULa\EOT\NUL\NUL\NUL\ETX\NUL\NUL\NUL\EOT\NUL\NUL\NUL\243\STX\NUL\NUL\ETX\NUL\NUL\NULfoo+\NUL\NUL\NUL\SOH\NUL\NUL\NULb\EOT\NUL\NUL\NUL\n\NUL\NUL\NUL\EOT\NUL\NUL\NUL\132\STX\NUL\NUL\DC2\NUL\NUL\NUL\ENQ\NUL\NUL\NULhello\ENQ\NUL\NUL\NULworld)\NUL\NUL\NUL\SOH\NUL\NUL\NULc\EOT\NUL\NUL\NUL\b\NUL\NUL\NUL\EOT\NUL\NUL\NUL\132\STX\NUL\NUL\DLE\NUL\NUL\NUL\EOT\NUL\NUL\NUL\NUL\NUL\NUL\NUL\EOT\NUL\NUL\NULzero"
+        decode = execParser $ (,,) <$> extractValue <*> extractValue <*> extractValue
+     in decode bs
 
--- From the last chapter
-testEncodeValue :: BS.ByteString
-testEncodeValue =
-    "\FS\NUL\NUL\NUL\SOH\NUL\NUL\NULa\EOT\NUL\NUL\NUL\ETX\NUL\NUL\NUL\EOT\NUL\NUL\NUL\243\STX\NUL\NUL\ETX\NUL\NUL\NULfoo+\NUL\NUL\NUL\SOH\NUL\NUL\NULb\EOT\NUL\NUL\NUL\n\NUL\NUL\NUL\EOT\NUL\NUL\NUL\132\STX\NUL\NUL\DC2\NUL\NUL\NUL\ENQ\NUL\NUL\NULhello\ENQ\NUL\NUL\NULworld)\NUL\NUL\NUL\SOH\NUL\NUL\NULc\EOT\NUL\NUL\NUL\b\NUL\NUL\NUL\EOT\NUL\NUL\NUL\132\STX\NUL\NUL\DLE\NUL\NUL\NUL\EOT\NUL\NUL\NUL\NUL\NUL\NUL\NUL\EOT\NUL\NUL\NULzero"
-
-data FilePackImage
-    = FilePackPBM Word32 Word32 [Word32]
-    | FilePackPGM Word32 Word32 Word32 [Word32]
-    deriving (Eq, Show)
-
-instance Encode FilePackImage where
-    encode (FilePackPBM width height values) =
-        encode $
-            encodeWithSize @String "pbm"
-                <> encodeWithSize width
-                <> encodeWithSize height
-                -- The Encode instance for list already includes size info
-                <> encode values
-    encode (FilePackPGM width height maxValue values) =
-        encode $
-            encodeWithSize @String "pgm"
-                <> encodeWithSize width
-                <> encodeWithSize height
-                <> encodeWithSize maxValue
-                -- The Encode instance for list already includes size info
-                <> encode values
-
-instance Decode FilePackImage where
-    decode = do
-        tag <- extractValue @String
-        case tag of
-            "pbm" ->
-                FilePackPBM
-                    <$> extractValue
-                    <*> extractValue
-                    <*> many extractValue
-            "pgm" ->
-                FilePackPGM
-                    <$> extractValue
-                    <*> extractValue
-                    <*> extractValue
-                    <*> many extractValue
-            otherTag -> throwError $ "Unknown image type tag: " <> otherTag
-
-parsePBM, parsePGM :: FilePackParser FilePackImage
-parsePBM = FilePackPBM <$> extractValue <*> extractValue <*> many extractValue
-parsePGM =
-    FilePackPGM
-        <$> extractValue
-        <*> extractValue
-        <*> extractValue
-        <*> many extractValue
-
-getNetpbmParser :: String -> FilePackParser FilePackImage
-getNetpbmParser tag = case tag of
-    "pbm" -> parsePBM
-    "pgm" -> parsePGM
-    otherTag -> throwError $ "Unknown image type tag: " <> otherTag
-
-getNetpbmTag :: FilePackParser String
-getNetpbmTag = extractValue
-
-parseImage ::
-    FilePackParser String ->
-    (String -> FilePackParser FilePackImage) ->
-    FilePackParser FilePackImage
-parseImage = (>>=)
-
-instance MonadFail FilePackParser where
-    fail = throwError
+runDecodeTest :: IO ()
+runDecodeTest = decodeTest >>= print
 
 main :: IO ()
-main = testDecodeValue testEncodeValue >>= print
+main = do
+    runRoundTripTest
+    runDecodeTest
