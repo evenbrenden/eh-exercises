@@ -3,7 +3,6 @@
 module ShellCommand where
 
 import Data.Kind
-
 import System.Process (readProcess)
 
 class ShellCommand cmd where

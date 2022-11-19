@@ -48,12 +48,10 @@ instance ShellCommand Grep [GrepMatch] where
 
 data Pipe a r b r' = Pipe a (r -> b)
 
--- IDK
--- instance (ShellCommand a, ShellCommand b) => ShellCommand (Pipe a b) where
---     type ShellOutput (Pipe a b) = ShellOutput b
---     runCmd (Pipe a mkB) run = do
---         result <- runCmd a run
---         runCmd (mkB result) run
+instance (ShellCommand a r, ShellCommand b r') => ShellCommand (Pipe a r b r') r' where
+    runCmd (Pipe a mkB) run = do
+        result <- runCmd a run
+        runCmd (mkB result) run
 
 grepFilesInDirectory ::
     String ->
