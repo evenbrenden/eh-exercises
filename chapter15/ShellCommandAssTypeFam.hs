@@ -1,6 +1,6 @@
 {-# LANGUAGE TypeFamilies #-}
 
-module ShellCommand where
+module ShellCommandAssTypeFam where
 
 import Data.Kind
 import System.Process (readProcess)
