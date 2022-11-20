@@ -44,6 +44,7 @@ listDirectory =
         makeArgs filePath = ProgArgs ["-1", filePath]
         parseResponse filePath =
             map (filePath </>) . lines
+
 runShellCmd :: ShellCmd a b -> a -> IO b
 runShellCmd cmd input =
     case cmd of
