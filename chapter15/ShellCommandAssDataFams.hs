@@ -1,7 +1,7 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE TypeFamilies #-}
 
-module ShellCommandAssDataFam where
+module ShellCommandAssDataFams where
 
 import Data.Kind
 import System.Process (readProcess)
