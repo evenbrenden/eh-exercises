@@ -62,21 +62,15 @@ class
 instance CommandByName' True name (CommandSet (name : names) (ShellCmd a b : types)) a b where
     lookupProcessByName' _ _ (AddCommand cmd _) = cmd
 
+type family HeadMatches (name :: Symbol) (names :: [Symbol]) :: Bool where
+    HeadMatches name (name : _) = True
+    HeadMatches name _ = False
+
 instance
-    ( CommandByName'
-        (HeadMatches name names)
-        name
-        (CommandSet names types)
-        shellIn
-        shellOut
+    ( nextMatches ~ HeadMatches name names,
+      CommandByName' nextMatches name (CommandSet names types) shellIn shellOut
     ) =>
     CommandByName' False name (CommandSet (badName : names) (t : types)) shellIn shellOut
     where
     lookupProcessByName' _ nameProxy (AddCommand _ rest) =
-        lookupProcessByName' matchProxy nameProxy rest
-        where
-            matchProxy = Proxy @(HeadMatches name names)
-
-type family HeadMatches (name :: Symbol) (names :: [Symbol]) :: Bool where
-    HeadMatches name (name : _) = True
-    HeadMatches name _ = False
+        lookupProcessByName' (Proxy @nextMatches) nameProxy rest
