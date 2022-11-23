@@ -1,1 +1,1 @@
-![](mnemonic.png)
+![https://rebeccaskinner.net/images/typefamilies.png](mnemonic.png)
