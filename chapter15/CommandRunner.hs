@@ -62,10 +62,6 @@ class
 instance CommandByName' True name (CommandSet (name : names) (ShellCmd a b : types)) a b where
     lookupProcessByName' _ _ (AddCommand cmd _) = cmd
 
-type family HeadMatches (name :: Symbol) (names :: [Symbol]) :: Bool where
-    HeadMatches name (name : _) = True
-    HeadMatches name _ = False
-
 instance
     ( nextMatches ~ HeadMatches name names,
       CommandByName' nextMatches name (CommandSet names types) shellIn shellOut
@@ -74,3 +70,52 @@ instance
     where
     lookupProcessByName' _ nameProxy (AddCommand _ rest) =
         lookupProcessByName' (Proxy @nextMatches) nameProxy rest
+
+type family HeadMatches (name :: Symbol) (names :: [Symbol]) :: Bool where
+    HeadMatches name (name : _) = True
+    HeadMatches name _ = False
+
+class CommandByName (name :: Symbol) commands shellIn shellOut | commands name -> shellIn shellOut where
+    lookupProcessByName ::
+        proxy name -> commands -> ShellCmd shellIn shellOut
+
+instance
+    ( matches ~ HeadMatches name names,
+      HasMatch name names,
+      CommandByName' matches name (CommandSet names types) shellIn shellOut
+    ) =>
+    CommandByName name (CommandSet names types) shellIn shellOut
+    where
+    lookupProcessByName _ =
+        lookupProcessByName' (Proxy @matches) (Proxy @name)
+
+type HasMatch a as = HasMatch' a as as
+
+type family
+    HasMatch'
+        (needles :: Symbol)
+        (haystack :: [Symbol])
+        (ctx :: [Symbol]) ::
+        Constraint
+    where
+    HasMatch' a '[] ctx =
+        TypeError
+            ( Text "Command '"
+                :<>: Text a
+                :<>: Text "' is not in the command list: "
+                :<>: ShowType ctx
+            )
+    HasMatch' a (a : as) ctx = ()
+    HasMatch' a (b : as) ctx = HasMatch' a as ctx
+
+runNamedCommand ::
+    forall name {commands} {shellIn} {shellOut}.
+    ( KnownSymbol name,
+      CommandByName name commands shellIn shellOut
+    ) =>
+    commands ->
+    shellIn ->
+    IO shellOut
+runNamedCommand allowedCommands input =
+    let process = lookupProcessByName (Proxy @name) allowedCommands
+     in runShellCmd process input
