@@ -1,4 +1,5 @@
 {-# LANGUAGE GADTs #-}
+{-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeFamilies #-}
 
 module ShellCommandGADTs where
@@ -57,3 +58,13 @@ runShellCmd cmd input =
         MapOut mapF -> pure $ mapF input
 
 -- Expanded Shell Commands PASS
+
+wc :: ShellCmd FilePath Int
+wc =
+    RunCommand (ProgName "wc") makeArgs parseResponse
+    where
+        makeArgs filePath = ProgArgs [filePath]
+        parseResponse _ = read @Int . head . words
+
+countLinesInMatchingFiles :: String -> ShellCmd FilePath [(FilePath, Int)]
+countLinesInMatchingFiles = undefined

@@ -63,14 +63,12 @@ instance ShellCommand Grep where
                     _ -> responseLines
 
 -- A Complete Data Family Based ShellCommand PASS
+
 data Pipe a b = Pipe a (ShellOutput a -> b)
 
 instance (ShellCommand a, ShellCommand b) => ShellCommand (Pipe a b) where
     newtype ShellOutput (Pipe a b) = ShellOutput b
-    runCmd (Pipe a mkB) run = do
-        sa <- runCmd a run
-        sb <- runCmd (mkB sa) run
-        pure $ ShellOutput (mkB sa) -- What about sb?
+    runCmd (Pipe a mkB) run = undefined
 
 grepFilesInDirectory :: String -> FilePath -> Pipe ListDirectory Grep
 grepFilesInDirectory match dir =
