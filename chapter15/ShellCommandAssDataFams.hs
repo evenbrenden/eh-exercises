@@ -70,7 +70,7 @@ instance (ShellCommand a, ShellCommand b) => ShellCommand (Pipe a b) where
     runCmd (Pipe a mkB) run = do
         sa <- runCmd a run
         sb <- runCmd (mkB sa) run
-        pure $ ShellOutput (mkB sa) -- What about sb
+        pure $ ShellOutput (mkB sa) -- What about sb?
 
 grepFilesInDirectory :: String -> FilePath -> Pipe ListDirectory Grep
 grepFilesInDirectory match dir =
