@@ -10,6 +10,7 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE FlexibleContexts #-}
 
 module CommandRunner where
 
@@ -119,3 +120,12 @@ runNamedCommand ::
 runNamedCommand allowedCommands input =
     let process = lookupProcessByName (Proxy @name) allowedCommands
      in runShellCmd process input
+
+runScript availableProcesses = do
+    runNamedCommand @"ls" availableProcesses "." >>= mapM_ putStrLn
+    runNamedCommand @"free" availableProcesses () >>= putStr
+    runNamedCommand @"uname" availableProcesses () >>= putStr
+
+-- Expanded Shell Commands PASS
+
+-- Classless runScript PASS
