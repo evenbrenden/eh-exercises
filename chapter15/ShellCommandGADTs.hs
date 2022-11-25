@@ -55,3 +55,5 @@ runShellCmd cmd input =
         Pipe inputCmd out -> runShellCmd inputCmd input >>= runShellCmd out
         XArgs inputCmd -> mapM (runShellCmd inputCmd) input
         MapOut mapF -> pure $ mapF input
+
+-- Expanded Shell Commands PASS

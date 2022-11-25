@@ -126,6 +126,4 @@ runScript availableProcesses = do
     runNamedCommand @"free" availableProcesses () >>= putStr
     runNamedCommand @"uname" availableProcesses () >>= putStr
 
--- Expanded Shell Commands PASS
-
 -- Classless runScript PASS
