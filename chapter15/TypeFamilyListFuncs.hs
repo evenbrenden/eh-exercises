@@ -29,3 +29,20 @@ type family IfThenElse (p :: Bool) (t :: a) (f :: a) :: a where
 type family FindElems (p :: a -> ReturnValue Bool) (elems :: [a]) :: [a] where
     FindElems _ '[] = '[]
     FindElems p (a : as) = IfThenElse (Eval (p a)) (a : FindElems p as) (FindElems p as)
+
+-- Type Level map
+
+data Map :: (a -> ReturnValue b) -> f a -> ReturnValue (f b)
+type instance Eval (Map f []) = []
+type instance Eval (Map f (a : as)) = Eval (f a) : Eval (Map f as)
+
+-- > :kind! Eval (Map Even [0,1,2,3,4])
+-- Eval (Map Even [0,1,2,3,4]) :: [Bool]
+-- = 'True : 'False : 'True : 'False : 'True : Eval (Map Even '[])
+
+data Add :: Nat -> Nat -> ReturnValue Nat
+type instance Eval (Add a b) = a + b
+
+-- > :kind! Eval (Map (Add 2) [0,1,2,3,4])
+-- Eval (Map (Add 2) [0,1,2,3,4]) :: [Nat]
+-- = 2 : 3 : 4 : 5 : 6 : Eval (Map (Add 2) '[])
