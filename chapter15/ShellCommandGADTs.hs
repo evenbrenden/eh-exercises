@@ -66,5 +66,6 @@ wc =
         makeArgs filePath = ProgArgs [filePath]
         parseResponse _ = read @Int . head . words
 
+-- ls -1 | xargs grep -n GLOB | sed s/:.*$//g | sort -u | xargs wc -l | head -n -1
 countLinesInMatchingFiles :: String -> ShellCmd FilePath [(FilePath, Int)]
 countLinesInMatchingFiles = undefined
