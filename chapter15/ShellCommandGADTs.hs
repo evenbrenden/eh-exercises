@@ -4,6 +4,7 @@
 
 module ShellCommandGADTs where
 
+import qualified Data.Set as S
 import System.FilePath.Posix ((</>))
 import System.IO.Error
 import System.Process (readProcess)
@@ -66,6 +67,13 @@ wc =
         makeArgs filePath = ProgArgs [filePath]
         parseResponse _ = read @Int . head . words
 
+dedup :: Ord a => [a] -> [a]
+dedup = S.toList . S.fromList
+
 -- ls -1 | xargs grep -n GLOB | sed s/:.*$//g | sort -u | xargs wc -l | head -n -1
-countLinesInMatchingFiles :: String -> ShellCmd FilePath [(FilePath, Int)]
-countLinesInMatchingFiles = undefined
+-- countLinesInMatchingFiles :: String -> ShellCmd FilePath [(FilePath, Int)]
+countLinesInMatchingFiles glob =
+    let p1 = Pipe listDirectory (XArgs (grep glob))
+        p2 = Pipe p1 (MapOut (dedup . fmap grepMatchingFileName . concat))
+        p3 = Pipe p2 (XArgs wc)
+     in p3
