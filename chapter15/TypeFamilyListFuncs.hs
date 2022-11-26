@@ -32,7 +32,7 @@ type family FindElems (p :: a -> ReturnValue Bool) (elems :: [a]) :: [a] where
 
 -- Type Level map
 
-type family Map (f :: a -> ReturnValue b) (elems :: [a]) :: [b] where
+type family Map (ab :: a -> ReturnValue b) (elems :: f a) :: f b where
     Map _ '[] = '[]
     Map f (a : as) = Eval (f a) : Map f as
 
