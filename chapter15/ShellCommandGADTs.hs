@@ -58,7 +58,7 @@ runShellCmd cmd input =
         XArgs inputCmd -> mapM (runShellCmd inputCmd) input
         MapOut mapF -> pure $ mapF input
 
--- Expanded Shell Commands PASS
+-- Expanded Shell Commands
 
 wc :: ShellCmd FilePath (FilePath, Int)
 wc =
