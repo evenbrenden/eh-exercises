@@ -60,20 +60,20 @@ runShellCmd cmd input =
 
 -- Expanded Shell Commands PASS
 
-wc :: ShellCmd FilePath Int
+wc :: ShellCmd FilePath (FilePath, Int)
 wc =
     RunCommand (ProgName "wc") makeArgs parseResponse
     where
-        makeArgs filePath = ProgArgs [filePath]
-        parseResponse _ = read @Int . head . words
+        makeArgs fileName = ProgArgs [fileName]
+        parseResponse fileName responseLine = (fileName, wordCount responseLine)
+        wordCount = read @Int . head . words
 
-dedup :: Ord a => [a] -> [a]
-dedup = S.toList . S.fromList
-
--- ls -1 | xargs grep -n GLOB | sed s/:.*$//g | sort -u | xargs wc -l | head -n -1
--- countLinesInMatchingFiles :: String -> ShellCmd FilePath [(FilePath, Int)]
+countLinesInMatchingFiles :: String -> ShellCmd FilePath [(FilePath, Int)]
 countLinesInMatchingFiles glob =
     let p1 = Pipe listDirectory (XArgs (grep glob))
         p2 = Pipe p1 (MapOut (dedup . fmap grepMatchingFileName . concat))
         p3 = Pipe p2 (XArgs wc)
      in p3
+    where
+        dedup :: Ord a => [a] -> [a]
+        dedup = S.toList . S.fromList
