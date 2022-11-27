@@ -74,3 +74,6 @@ grepFilesInDirectory :: String -> FilePath -> Pipe ListDirectory Grep
 grepFilesInDirectory match dir =
     let grep listDir = Grep match (filenamesInListing listDir)
      in Pipe (ListDirectory dir) grep
+
+runShellCommand :: ShellCommand cmd => cmd -> IO (ShellOutput cmd)
+runShellCommand cmd = runCmd cmd (\cmdName args -> readProcess cmdName args "")
