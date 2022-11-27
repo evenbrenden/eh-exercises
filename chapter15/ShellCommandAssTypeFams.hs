@@ -63,3 +63,6 @@ instance (ShellCommand a, ShellCommand b) => ShellCommand (Pipe a b) where
 grepFilesInDirectory :: String -> FilePath -> Pipe ListDirectory Grep
 grepFilesInDirectory match dir =
     Pipe (ListDirectory dir) $ Grep match . map (\fname -> dir <> "/" <> fname)
+
+runShellCommand :: ShellCommand cmd => cmd -> IO (ShellOutput cmd)
+runShellCommand cmd = runCmd cmd (\cmdName args -> readProcess cmdName args "")
