@@ -65,8 +65,8 @@ wc =
     RunCommand (ProgName "wc") makeArgs parseResponse
     where
         makeArgs fileName = ProgArgs ["-l", fileName]
-        parseResponse fileName responseLine = (fileName, count responseLine)
-        count = read @Int . head . words
+        parseResponse fileName responseLine = (fileName, lineCount responseLine)
+        lineCount = read @Int . head . words
 
 countLinesInMatchingFiles :: String -> ShellCmd FilePath [(FilePath, Int)]
 countLinesInMatchingFiles glob =
