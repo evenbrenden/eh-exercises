@@ -51,7 +51,7 @@ parseGrepResponse = map parseLine
              in GrepMatch fileName (read matchNumber) contents
 
 instance ShellCommand Grep where
-    newtype ShellOutput Grep = ListOfGrepMatches {getListOfGrepMatches :: [GrepMatch]}
+    newtype ShellOutput Grep = ListOfGrepMatches {getListOfGrepMatches :: [GrepMatch]} deriving (Eq, Show)
     runCmd (Grep match grepFiles) run =
         ListOfGrepMatches . parseGrepResponse . fixResponses . lines <$> run "grep" grepArgs
         where
@@ -62,13 +62,18 @@ instance ShellCommand Grep where
                     [fname] -> (\l -> fname <> ":" <> l) <$> responseLines
                     _ -> responseLines
 
--- A Complete Data Family Based ShellCommand PASS
+-- A Complete Data Family Based ShellCommand
 
 data Pipe a b = Pipe a (ShellOutput a -> b)
 
 instance (ShellCommand a, ShellCommand b) => ShellCommand (Pipe a b) where
-    newtype ShellOutput (Pipe a b) = ShellOutput b
-    runCmd (Pipe a mkB) run = undefined
+    newtype ShellOutput (Pipe a b) = PipeOutput (ShellOutput b)
+    runCmd (Pipe a mkB) run = do
+        result <- runCmd a run
+        PipeOutput <$> runCmd (mkB result) run
+
+pipeOutput :: ShellOutput (Pipe a b) -> ShellOutput b
+pipeOutput (PipeOutput shellOutput) = shellOutput
 
 grepFilesInDirectory :: String -> FilePath -> Pipe ListDirectory Grep
 grepFilesInDirectory match dir =
@@ -77,3 +82,6 @@ grepFilesInDirectory match dir =
 
 runShellCommand :: ShellCommand cmd => cmd -> IO (ShellOutput cmd)
 runShellCommand cmd = runCmd cmd (\cmdName args -> readProcess cmdName args "")
+
+example :: IO (ShellOutput Grep)
+example = pipeOutput <$> runShellCommand (grepFilesInDirectory "ShellCommand" "./")
