@@ -4,4 +4,7 @@
 -- more whitespaces, prettified to contain only one whitespace in between the
 -- words ¯\_(ツ)_/¯
 prettify :: String -> String
-prettify = unwords . words
+prettify = decode . encode
+    where
+        encode = words
+        decode = unwords
